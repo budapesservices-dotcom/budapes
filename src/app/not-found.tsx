@@ -69,6 +69,10 @@ export default function App() {
   const t = content[lang];
 
   useEffect(() => {
+    const savedLang = localStorage.getItem("user-lang") as "in" | "en";
+    if (savedLang && (savedLang === "in" || savedLang === "en")) {
+      setLang(savedLang);
+    }
     const colors = ["bg-indigo-600", "bg-rose-600", "bg-cyan-600"];
     const newBlobs = Array.from({ length: 3 }).map((_, i) => ({
       id: i,
@@ -113,6 +117,11 @@ export default function App() {
     y.set(0);
   }
 
+  const handleLangChange = (newLang: "in" | "en") => {
+    setLang(newLang);
+    localStorage.setItem("user-lang", newLang);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -143,14 +152,14 @@ export default function App() {
         className="absolute top-10 right-10 z-[100] flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/5"
       >
         <button
-          onClick={() => setLang("in")}
+          onClick={() => handleLangChange("in")}
           className={`text-[8px] font-black uppercase transition-all tracking-[0.2em] ${lang === "in" ? "text-white" : "text-white/20 hover:text-white/50"}`}
         >
           IN
         </button>
         <span className="text-[8px] text-white/10 font-light">|</span>
         <button
-          onClick={() => setLang("en")}
+          onClick={() => handleLangChange("en")}
           className={`text-[8px] font-black uppercase transition-all tracking-[0.2em] ${lang === "en" ? "text-white" : "text-white/20 hover:text-white/50"}`}
         >
           EN

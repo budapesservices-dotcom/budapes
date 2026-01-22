@@ -95,6 +95,19 @@ export default function App() {
     }
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    const savedLang = localStorage.getItem("user-lang");
+    // Validasi apakah nilainya benar-benar "in" atau "en"
+    if (savedLang === "in" || savedLang === "en") {
+      setLang(savedLang);
+    }
+  }, []);
+
+  const changeLanguage = (newLang: "in" | "en") => {
+    setLang(newLang);
+    localStorage.setItem("user-lang", newLang); // Ini kuncinya agar sinkron ke 404
+  };
+
   const pageTransition = {
     initial: { opacity: 0, y: 15, filter: "blur(10px)" },
     animate: { opacity: 1, y: 0, filter: "blur(0px)" },
@@ -162,7 +175,7 @@ export default function App() {
           <div className="absolute left-1/2 -translate-x-1/2 sm:relative sm:left-0 sm:translate-x-0 sm:ml-auto sm:mr-4">
             <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 h-8 sm:h-10 backdrop-blur-md transition-all">
               <button
-                onClick={() => setLang("in")}
+                onClick={() => changeLanguage("in")}
                 className={`text-[9px] sm:text-[10px] font-bold tracking-[0.2em] transition-colors cursor-pointer ${
                   lang === "in"
                     ? "text-indigo-400"
@@ -177,7 +190,7 @@ export default function App() {
               </span>
 
               <button
-                onClick={() => setLang("en")}
+                onClick={() => changeLanguage("en")}
                 className={`text-[9px] sm:text-[10px] font-bold tracking-[0.2em] transition-colors cursor-pointer ${
                   lang === "en"
                     ? "text-indigo-400"
