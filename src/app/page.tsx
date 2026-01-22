@@ -326,17 +326,18 @@ export default function App() {
                         window.matchMedia("(pointer: coarse)").matches;
 
                       const targetHref = `${item.href.toLowerCase()}?lang=${lang}`;
-                      router.push(targetHref);
 
                       if (isTouchDevice) {
-                        // Mode Mobile: Tap pertama buka deskripsi, Tap kedua pindah
+                        // MODE MOBILE:
                         if (clickedIndex === index) {
+                          // Tap kedua: Pindah halaman
                           router.push(targetHref);
                         } else {
+                          // Tap pertama: Hanya memunculkan deskripsi dan efek hover
                           setClickedIndex(index);
                         }
                       } else {
-                        // Mode Desktop: Langsung pindah halaman
+                        // MODE DESKTOP: Langsung pindah dalam 1x klik
                         router.push(targetHref);
                       }
                     }}
