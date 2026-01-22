@@ -1,0 +1,17 @@
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 50% 100%; }
+  100% { background-position: 50% 0%; }
+}
+@keyframes text-flow {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+.animateCardGradient {
+  animation: gradient-shift 4s linear infinite;
+}
+
+.animateTextGradient {
+  animation: text-flow 4s linear infinite;
+}
