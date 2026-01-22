@@ -320,20 +320,16 @@ export default function App() {
                       const isTouchDevice =
                         typeof window !== "undefined" &&
                         window.matchMedia("(pointer: coarse)").matches;
-
-                      // Pastikan item.href tersedia di data Anda
-                      const targetHref = item.href || "/404";
+                      const targetHref = item.href || "/404-test"; // Gunakan path yang pasti salah untuk tes
 
                       if (isTouchDevice) {
                         if (clickedIndex === index) {
-                          // INI YANG MEMBUAT PINDAH HALAMAN
-                          window.location.href = targetHref;
+                          router.push(targetHref); // Menggunakan router.push
                         } else {
                           setClickedIndex(index);
                         }
                       } else {
-                        // UNTUK DESKTOP (Langsung pindah)
-                        window.location.href = targetHref;
+                        router.push(targetHref); // Menggunakan router.push untuk desktop
                       }
                     }}
                     style={{
