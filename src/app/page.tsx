@@ -19,19 +19,19 @@ export default function App() {
       navItems: [
         {
           title: "Diskografi",
-          href: "/diskografi",
+          href: "/discography",
           description:
             "Berani dalam harmoni, tajam dalam komposisi. Koleksi mahakarya bagi mereka yang memahami arti sebuah kualitas sejati, Inilah bukti dedikasi yang tak lekang oleh waktu.",
         },
         {
           title: "Portofolio",
-          href: "/portofolio",
+          href: "/portfolio",
           description:
             "Hanya untuk mereka yang tidak mengenal kompromi. Jejak kolaborasi global yang mendefinisikan ulang arti sebuah standar. Di sini, kepercayaan adalah mahakarya yang nyata.",
         },
         {
           title: "Tentang kami",
-          href: "/tentang-kami",
+          href: "/about-us",
           description:
             "Menatap masa depan dengan keberanian. Menyatukan presisi digital dengan intuisi manusia. Kami adalah para pemimpi yang bekerja dengan nyata, menciptakan standar baru di tengah keriuhan dunia.",
         },
@@ -54,13 +54,13 @@ export default function App() {
       navItems: [
         {
           title: "Discography",
-          href: "/Discography",
+          href: "/discography",
           description:
             "Bold in harmony, sharp in composition. A collection of masterpieces for those who truly understand the meaning of authenticity, This is a testament to timeless dedication.",
         },
         {
           title: "Portfolio",
-          href: "/Portfolio",
+          href: "/portfolio",
           description:
             "Reserved for the uncompromising. A trail of global collaborations redefining the very essence of standards. Here, trust is the ultimate masterpiece.",
         },
@@ -304,9 +304,13 @@ export default function App() {
                 {t.navItems.map((item, index) => (
                   <motion.div
                     key={`${lang}-${index}`}
-                    /* ... props initial, animate, whileTap tetap sama ... */
+                    whileHover={{
+                      scale: 1.01,
+                      borderColor: "rgba(255, 255, 255, 0.3)", // Border lebih tegas saat hover
+                      transition: { duration: 0.3 },
+                    }}
                     onMouseEnter={() => {
-                      // hanya aktifkan hover di perangkat non-coarse (desktop)
+                      // Desktop: Memicu ekspansi kartu dan perubahan warna
                       if (!window.matchMedia("(pointer: coarse)").matches) {
                         setHoveredIndex(index);
                       }
@@ -320,16 +324,20 @@ export default function App() {
                       const isTouchDevice =
                         typeof window !== "undefined" &&
                         window.matchMedia("(pointer: coarse)").matches;
-                      const targetHref = item.href || "/404-test"; // Gunakan path yang pasti salah untuk tes
+
+                      const targetHref = `${item.href.toLowerCase()}?lang=${lang}`;
+                      router.push(targetHref);
 
                       if (isTouchDevice) {
+                        // Mode Mobile: Tap pertama buka deskripsi, Tap kedua pindah
                         if (clickedIndex === index) {
-                          router.push(targetHref); // Menggunakan router.push
+                          router.push(targetHref);
                         } else {
                           setClickedIndex(index);
                         }
                       } else {
-                        router.push(targetHref); // Menggunakan router.push untuk desktop
+                        // Mode Desktop: Langsung pindah halaman
+                        router.push(targetHref);
                       }
                     }}
                     style={{
@@ -337,23 +345,29 @@ export default function App() {
                         hoveredIndex === index || clickedIndex === index
                           ? "140px"
                           : "60px",
-                      // Gunakan pengecekan yang lebih tegas untuk gradient
-                      background:
-                        clickedIndex === index
+
+                      // Perubahan Utama: Hover sekarang menggunakan gradasi warna, bukan putih transparan
+                      backgroundImage:
+                        clickedIndex === index || hoveredIndex === index
                           ? "linear-gradient(135deg, #6366f1, #f43f5e, #06b6d4, #6366f1)"
-                          : hoveredIndex === index
-                            ? "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))"
-                            : "rgba(255, 255, 255, 0.02)",
-                      boxShadow:
-                        clickedIndex === index
-                          ? "0 0 60px 10px rgba(99, 102, 241, 0.4)"
                           : "none",
+
+                      backgroundColor:
+                        clickedIndex === index || hoveredIndex === index
+                          ? "transparent"
+                          : "rgba(255, 255, 255, 0.02)",
+
+                      boxShadow:
+                        clickedIndex === index || hoveredIndex === index
+                          ? "0 0 40px rgba(99, 102, 241, 0.3)" // Efek cahaya saat hover/klik
+                          : "none",
+
                       backgroundSize: "200% 200%",
                     }}
                     className={`relative backdrop-blur-3xl border rounded-4xl overflow-hidden cursor-pointer p-4 flex flex-col items-center justify-center transition-all duration-500 ${
-                      clickedIndex === index
-                        ? "animate-card-gradient border-white/50"
-                        : "border-white/5"
+                      clickedIndex === index || hoveredIndex === index
+                        ? "animate-card-gradient border-white/50 z-30" // Animasi gradient aktif saat hover
+                        : "border-white/5 z-20"
                     }`}
                   >
                     <motion.span

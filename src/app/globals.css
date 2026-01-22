@@ -20,6 +20,6 @@ body { background-color: #050505; }
 }
 
 .animate-card-gradient {
-  background-size: 200% 200% !important;
-  animation: gradient-shift 3s ease infinite !important;
+  background-size: 200% 200%; /* Hapus !important agar tidak kaku */
+  animation: gradient-shift 3s ease infinite; 
 }
