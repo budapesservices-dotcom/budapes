@@ -16,9 +16,9 @@ const content = {
     label: "LIHAT DIRIMU",
     title: "DI LUAR\nBATAS NORMAL",
     desc: "Terkadang tersesat adalah bagian dari perjalanan. Namun, di sini hanya ada ruang hampa dan angka yang bisu. Mari kembali ke jalan ninjamu.",
-    home: "Beranda",
+    home: "beranda",
     help: "Bantuan",
-    game: "Mainkan Mini Game",
+    welcome: "Kembali ke Selamat Datang",
     studio: "BUDAPES STUDIO • LOSS OF CONNECTION",
   },
   en: {
@@ -27,7 +27,7 @@ const content = {
     desc: "Getting lost is part of the journey, they said. Well, they didn't mention this silent void. Go on, get back to your ninja path before it gets weirder.",
     home: "Home",
     help: "Help",
-    game: "Play Mini Game",
+    welcome: "Back to Welcome",
     studio: "BUDAPES STUDIO • LOSS OF CONNECTION",
   },
 };
@@ -234,7 +234,7 @@ export default function App() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => (window.location.href = "/")}
+                  onClick={() => (window.location.href = "/home")}
                   className="relative group px-8 py-3 border border-white/20 rounded-full overflow-hidden transition-all duration-500 hover:border-white/60 bg-white/5"
                 >
                   <div
@@ -262,18 +262,18 @@ export default function App() {
                 </motion.button>
               </motion.div>
 
-              {/* Tautan Mini Game */}
+              {/* Tautan welcome */}
               <motion.button
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 0.6, x: 0 }}
                 transition={{ delay: 0.9 }}
                 whileHover={{ opacity: 1, x: 10 }}
-                onClick={() => (window.location.href = "/renungan")}
+                onClick={() => (window.location.href = "/")}
                 className="flex items-center gap-4 group cursor-pointer w-fit"
               >
                 <div className="h-[2px] w-12 bg-gradient-to-r from-indigo-500 to-rose-500 group-hover:w-16 transition-all duration-500" />
                 <span className="text-[10px] md:text-[12px] font-black tracking-[0.4em] uppercase bg-clip-text text-transparent bg-gradient-to-r from-neutral-200 to-neutral-500 group-hover:from-white group-hover:to-indigo-300 transition-all duration-300">
-                  {t.game}
+                  {t.welcome}
                 </span>
                 <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.8)]" />
               </motion.button>
