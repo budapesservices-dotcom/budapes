@@ -234,7 +234,7 @@ export default function App() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => (window.location.href = "/")}
+                  onClick={() => (window.location.href = "/game")}
                   className="relative group px-8 py-3 border border-white/20 rounded-full overflow-hidden transition-all duration-500 hover:border-white/60 bg-white/5"
                 >
                   <div
@@ -268,7 +268,7 @@ export default function App() {
                 animate={{ opacity: 0.6, x: 0 }}
                 transition={{ delay: 0.9 }}
                 whileHover={{ opacity: 1, x: 10 }}
-                onClick={() => (window.location.href = "/game")}
+                onClick={() => (window.location.href = "/renungan")}
                 className="flex items-center gap-4 group cursor-pointer w-fit"
               >
                 <div className="h-[2px] w-12 bg-gradient-to-r from-indigo-500 to-rose-500 group-hover:w-16 transition-all duration-500" />
