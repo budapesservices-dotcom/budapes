@@ -137,8 +137,8 @@ export default function App() {
           className="absolute inset-0 opacity-20"
           style={{
             background:
-              "radial-gradient(at 0% 0%, #6366f1 0px, transparent 50%), radial-gradient(at 100% 0%, #f43f5e 0px, transparent 50%), radial-gradient(at 50% 100%, #06b6d4 0px, transparent 50%)",
-            backgroundSize: "200% 200%",
+              "radial-gradient(at 0% 0%, #6366f1 0px, transparent 80%), radial-gradient(at 100% 0%, #f43f5e 0px, transparent 50%), radial-gradient(at 50% 100%, #06b6d4 0px, transparent 50%)",
+            backgroundSize: "300% 300%",
             filter: "blur(60px)",
           }}
         />

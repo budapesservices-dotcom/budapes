@@ -35,7 +35,7 @@ const content = {
 const Blob = ({ color, size, initialPos }: any) => {
   return (
     <motion.div
-      className={`absolute rounded-full blur-[80px] opacity-[0.15] ${color}`}
+      className={`absolute rounded-full blur-[40px] opacity-[0.15] ${color}`}
       style={{
         width: size,
         height: size,
@@ -69,7 +69,7 @@ export default function App() {
 
   useEffect(() => {
     const colors = ["bg-indigo-600", "bg-rose-600", "bg-cyan-600"];
-    const newBlobs = Array.from({ length: 12 }).map((_, i) => ({
+    const newBlobs = Array.from({ length: 3 }).map((_, i) => ({
       id: i,
       color: colors[i % 3],
       size: Math.random() * 300 + 200,
@@ -83,7 +83,7 @@ export default function App() {
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const springConfig = { damping: 25, stiffness: 150 };
+  const springConfig = { damping: 40, stiffness: 100 }; // Damping lebih tinggi = lebih tenang
   const rotateX = useSpring(
     useTransform(y, [-300, 300], [15, -15]),
     springConfig,
