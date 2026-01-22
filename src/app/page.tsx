@@ -337,15 +337,16 @@ export default function App() {
                         hoveredIndex === index || clickedIndex === index
                           ? "140px"
                           : "60px",
-                      backgroundImage:
+                      // Gunakan pengecekan yang lebih tegas untuk gradient
+                      background:
                         clickedIndex === index
                           ? "linear-gradient(135deg, #6366f1, #f43f5e, #06b6d4, #6366f1)"
                           : hoveredIndex === index
-                            ? "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))"
+                            ? "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))"
                             : "rgba(255, 255, 255, 0.02)",
                       boxShadow:
                         clickedIndex === index
-                          ? "0 0 60px 10px rgba(99, 102, 241, 0.6)"
+                          ? "0 0 60px 10px rgba(99, 102, 241, 0.4)"
                           : "none",
                       backgroundSize: "200% 200%",
                     }}
