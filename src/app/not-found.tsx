@@ -41,6 +41,7 @@ const Blob = ({ color, size, initialPos }: any) => {
         height: size,
         left: initialPos.x,
         top: initialPos.y,
+        willChange: "transform",
       }}
       animate={{
         x: [0, Math.random() * 100 - 50, Math.random() * 100 - 50, 0],
@@ -165,7 +166,7 @@ export default function App() {
           style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
           className="relative"
         >
-          <div className="absolute inset-0 bg-white/5 blur-[80px] rounded-full scale-150 pointer-events-none" />
+          <div className="absolute inset-0 bg-white/5 blur-[40px] rounded-full scale-150 pointer-events-none" />
           <h1 className="text-[5rem] md:text-[7rem] font-black leading-none tracking-[-0.05em] text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/20 select-none drop-shadow-[0_0_25px_rgba(255,255,255,0.03)]">
             404
           </h1>
@@ -173,7 +174,7 @@ export default function App() {
       </section>
 
       {/* Bagian Kanan: Konten Teks */}
-      <section className="flex-[1.3] relative z-10 flex flex-col justify-start items-start p-12 md:p-32 justify-center bg-white/[0.03] backdrop-blur-[40px] border-l border-white/10">
+      <section className="flex-[1.3] relative z-10 flex flex-col items-start p-12 md:p-32 justify-center bg-white/[0.03] backdrop-blur-md border-l border-white/10">
         <AnimatePresence mode="wait">
           <motion.div
             key={lang}
