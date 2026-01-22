@@ -317,24 +317,23 @@ export default function App() {
                       }
                     }}
                     onClick={() => {
-                      // Cek apakah perangkat layar sentuh (mobile)
                       const isTouchDevice =
                         typeof window !== "undefined" &&
                         window.matchMedia("(pointer: coarse)").matches;
 
+                      // Pastikan item.href tersedia di data Anda
+                      const targetHref = item.href || "/404";
+
                       if (isTouchDevice) {
-                        // LOGIKA MOBILE (Double Tap)
                         if (clickedIndex === index) {
-                          // Tap ke-2: Pindah halaman
-                          window.location.href = item.href;
+                          // INI YANG MEMBUAT PINDAH HALAMAN
+                          window.location.href = targetHref;
                         } else {
-                          // Tap ke-1: Buka deskripsi
                           setClickedIndex(index);
                         }
                       } else {
-                        // LOGIKA DESKTOP (One Click)
-                        // Sekali klik langsung pindah halaman
-                        window.location.href = item.href;
+                        // UNTUK DESKTOP (Langsung pindah)
+                        window.location.href = targetHref;
                       }
                     }}
                     style={{
