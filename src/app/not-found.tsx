@@ -120,7 +120,7 @@ export default function App() {
       transition={{ duration: 1.2, ease: "easeOut" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="h-screen w-full bg-[#050505] text-white font-sans selection:bg-indigo-500 selection:text-white overflow-hidden relative flex flex-row items-stretch"
+      className="h-screen w-full bg-[#050505] text-white font-sans selection:bg-indigo-500 selection:text-white overflow-y-auto md:overflow-hidden relative flex flex-col md:flex-row items-stretch"
     >
       {/* Latar Belakang Animasi */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -158,7 +158,7 @@ export default function App() {
       </motion.div>
 
       {/* Bagian Kiri: 404 Visual */}
-      <section className="flex-[0.7] flex items-center justify-center relative z-20 border-r border-white/5 bg-transparent">
+      <section className="flex-[0.5] md:flex-[0.7] min-h-[40vh] md:min-h-0 flex items-center justify-center relative z-20 border-b md:border-b-0 md:border-r border-white/5 bg-transparent">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -174,7 +174,7 @@ export default function App() {
       </section>
 
       {/* Bagian Kanan: Konten Teks */}
-      <section className="flex-[1.3] relative z-10 flex flex-col items-start p-12 md:p-32 justify-center bg-white/[0.03] backdrop-blur-md border-l border-white/10">
+      <section className="flex-[1.5] md:flex-[1.3] relative z-10 flex flex-col items-start p-8 md:p-32 justify-center bg-white/[0.03] backdrop-blur-md border-t md:border-t-0 md:border-l border-white/10">
         <AnimatePresence mode="wait">
           <motion.div
             key={lang}
