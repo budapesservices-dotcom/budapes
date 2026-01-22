@@ -174,7 +174,7 @@ export default function App() {
       </section>
 
       {/* Bagian Kanan: Konten Teks */}
-      <section className="flex-[1.5] md:flex-[1.3] relative z-10 flex flex-col items-start p-8 md:p-32 justify-center bg-white/[0.03] backdrop-blur-md border-t md:border-t-0 md:border-l border-white/10">
+      <section className="flex-[1.5] md:flex-[1.3] relative z-10 flex flex-col items-start p-8 md:pt-48 md:pb-32p-8 md:p-32 justify-center md:justify-center bg-white/[0.05] border-t md:border-t-0 md:border-l border-white/10">
         <AnimatePresence mode="wait">
           <motion.div
             key={lang}
