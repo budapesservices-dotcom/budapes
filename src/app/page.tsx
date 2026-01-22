@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function App() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [clickedIndex, setClickedIndex] = useState<number | null>(null); // State baru
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [lang, setLang] = useState<"in" | "en">("in");
+  const router = useRouter();
 
   const content = {
     in: {
@@ -16,16 +19,19 @@ export default function App() {
       navItems: [
         {
           title: "Diskografi",
+          href: "/diskografi",
           description:
             "Berani dalam harmoni, tajam dalam komposisi. Koleksi mahakarya bagi mereka yang memahami arti sebuah kualitas sejati, Inilah bukti dedikasi yang tak lekang oleh waktu.",
         },
         {
           title: "Portofolio",
+          href: "/portofolio",
           description:
             "Hanya untuk mereka yang tidak mengenal kompromi. Jejak kolaborasi global yang mendefinisikan ulang arti sebuah standar. Di sini, kepercayaan adalah mahakarya yang nyata.",
         },
         {
           title: "Tentang kami",
+          href: "/tentang-kami",
           description:
             "Menatap masa depan dengan keberanian. Menyatukan presisi digital dengan intuisi manusia. Kami adalah para pemimpi yang bekerja dengan nyata, menciptakan standar baru di tengah keriuhan dunia.",
         },
@@ -48,16 +54,19 @@ export default function App() {
       navItems: [
         {
           title: "Discography",
+          href: "/Discography",
           description:
             "Bold in harmony, sharp in composition. A collection of masterpieces for those who truly understand the meaning of authenticity, This is a testament to timeless dedication.",
         },
         {
           title: "Portfolio",
+          href: "/Portfolio",
           description:
             "Reserved for the uncompromising. A trail of global collaborations redefining the very essence of standards. Here, trust is the ultimate masterpiece.",
         },
         {
           title: "About us",
+          href: "/about-us",
           description:
             "Gazing into the future with courage. Fusing digital precision with human intuition. We are dreamers who act, setting new standards amidst the noise of the world.",
         },
@@ -102,11 +111,9 @@ export default function App() {
       transition: { type: "spring", stiffness: 400, damping: 30 },
     },
     open: {
-      // Gunakan lebar yang lebih kecil untuk mobile
-      width: window.innerWidth < 640 ? "220px" : "280px",
+      width: isMobile ? "230px" : "280px", // Menggunakan state
       height: "auto",
-      // Hapus minHeight yang terlalu besar atau sesuaikan
-      minHeight: window.innerWidth < 640 ? "350px" : "450px",
+      minHeight: isMobile ? "350px" : "450px",
       borderRadius: "24px",
       backgroundColor: "rgba(10, 10, 10, 0.98)",
       transition: { type: "spring", stiffness: 120, damping: 20 },
@@ -310,27 +317,24 @@ export default function App() {
                       }
                     }}
                     onClick={() => {
+                      // Cek apakah perangkat layar sentuh (mobile)
                       const isTouchDevice =
+                        typeof window !== "undefined" &&
                         window.matchMedia("(pointer: coarse)").matches;
 
                       if (isTouchDevice) {
+                        // LOGIKA MOBILE (Double Tap)
                         if (clickedIndex === index) {
-                          // Tap kedua = konfirmasi navigasi
-                          console.log("Navigasi ke:", item.title);
-                        } else if (clickedIndex === null) {
-                          // Tap pertama: buka (glass -> gradient)
-                          setClickedIndex(index);
+                          // Tap ke-2: Pindah halaman
+                          window.location.href = item.href;
                         } else {
-                          // Ada kartu lain aktif -> tutup (revert ke glass)
-                          setClickedIndex(null);
+                          // Tap ke-1: Buka deskripsi
+                          setClickedIndex(index);
                         }
                       } else {
-                        // Desktop: klik pertama ubah ke gradient, klik lagi bisa konfirmasi
-                        if (clickedIndex === index) {
-                          console.log("Navigasi ke:", item.title);
-                        } else {
-                          setClickedIndex(index);
-                        }
+                        // LOGIKA DESKTOP (One Click)
+                        // Sekali klik langsung pindah halaman
+                        window.location.href = item.href;
                       }
                     }}
                     style={{
