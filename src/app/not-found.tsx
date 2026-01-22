@@ -234,7 +234,7 @@ export default function App() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => (window.location.href = "/game")}
+                  onClick={() => (window.location.href = "/")}
                   className="relative group px-8 py-3 border border-white/20 rounded-full overflow-hidden transition-all duration-500 hover:border-white/60 bg-white/5"
                 >
                   <div
