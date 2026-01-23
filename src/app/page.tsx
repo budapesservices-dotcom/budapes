@@ -239,10 +239,22 @@ const Section = ({
 
 export default function App() {
   const [lang, setLang] = useState<keyof typeof content>("id");
+
+  type BlobItem = {
+    id: number;
+    color: string;
+    size: number;
+    initialPos: { x: string; y: string };
+  };
   const [mounted, setMounted] = useState(false);
   const [noiseIntensity, setNoiseIntensity] = useState(0.05); // State untuk mengontrol intensitas noise
 
   useEffect(() => {
+    const savedLang = localStorage.getItem("user-lang") as (keyof typeof content) | null;
+    if (savedLang && (savedLang === "id" || savedLang === "en")) {
+      setLang(savedLang);
+    }
+
     setMounted(true);
 
     // AKTIFKAN LENIS HANYA DI DESKTOP
@@ -278,6 +290,11 @@ export default function App() {
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
   if (!mounted) return <div className="bg-black min-h-screen" />;
+
+  const handleLangChange = (newLang: keyof typeof content) => {
+    setLang(newLang);
+    localStorage.setItem("user-lang", newLang);
+  };
 
   return (
     <div className="bg-black text-zinc-100 font-sans selection:bg-amber-500">
@@ -341,7 +358,7 @@ export default function App() {
         {["id", "en"].map((l) => (
           <button
             key={l}
-            onClick={() => setLang(l as any)}
+            onClick={() => handleLangChange(l as keyof typeof content)}
             className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${lang === l ? "bg-white text-black border-white" : "text-zinc-500 border-white/10 backdrop-blur-md"}`}
           >
             {l}
@@ -375,7 +392,7 @@ export default function App() {
 
       {/* Sections */}
       <div className="relative">
-        {content[lang].map((item: any, idx: number) => (
+        {(content[lang] ?? []).map((item: any, idx: number) => (
           <Section
             key={idx} // Gunakan idx agar tidak remount seluruh section, hanya kontennya
             data={item}

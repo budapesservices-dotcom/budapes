@@ -155,7 +155,7 @@ export default function App() {
           onClick={() => handleLangChange("in")}
           className={`text-[8px] font-black uppercase transition-all tracking-[0.2em] ${lang === "in" ? "text-white" : "text-white/20 hover:text-white/50"}`}
         >
-          IN
+          ID
         </button>
         <span className="text-[8px] text-white/10 font-light">|</span>
         <button

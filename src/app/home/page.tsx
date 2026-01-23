@@ -182,7 +182,7 @@ export default function App() {
                     : "text-neutral-500 hover:text-neutral-300"
                 }`}
               >
-                IN
+                ID
               </button>
 
               <span className="mx-1.5 sm:mx-2 text-neutral-800 text-[8px] sm:text-[10px] select-none">
