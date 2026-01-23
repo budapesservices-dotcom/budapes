@@ -3,7 +3,14 @@
 import Link from "next/link";
 import Lenis from "lenis";
 import React, { useState, useRef, useEffect } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useSpring,
+  useVelocity,
+  AnimatePresence,
+} from "framer-motion";
 import { MoveRight } from "lucide-react";
 
 // Data Konten
@@ -79,7 +86,7 @@ const content: Record<string, any> = {
       id: "01",
       title: "SILENCE",
       headline: "The \nDeafening Silence.",
-      body: "Quality never screams. It creeps slowly, slipping between the hesitant heartbeats.",
+      body: "Quality never screams. It crept slowly, slipping between the hesitant heartbeats.",
       theme: "text-amber-500",
       bg: "bg-zinc-950",
     },
@@ -108,14 +115,6 @@ const content: Record<string, any> = {
       bg: "bg-neutral-950",
     },
     {
-      id: "05",
-      title: "RAW",
-      headline: "Honest Without \nCompromise.",
-      body: "True luxury does not need polishing. It arrives in the form of pureness that defies ordinary definitions.",
-      theme: "text-amber-500",
-      bg: "bg-zinc-950",
-    },
-    {
       id: "06",
       title: "ECHOES",
       headline: "Echoes That \nRefuse to Die.",
@@ -142,67 +141,95 @@ const content: Record<string, any> = {
   ],
 };
 
-const Section = ({ data, index }: { data: any; index: number }) => {
+const Section = ({
+  data,
+  index,
+  lang,
+}: {
+  data: any;
+  index: number;
+  lang: string;
+}) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
 
+  const scrollVelocity = useVelocity(scrollYProgress);
+  const skew = useSpring(useTransform(scrollVelocity, [-1, 1], [-8, 8]), {
+    stiffness: 100,
+    damping: 30,
+  });
+  const blurValue = useSpring(
+    useTransform(scrollVelocity, [-1, 0, 1], [4, 0, 4]),
+    { stiffness: 100, damping: 30 },
+  );
+
   const isLeft = index % 2 === 0;
   const x = useTransform(
     scrollYProgress,
     [0, 0.5, 1],
-    isLeft ? ["-10%", "0%", "10%"] : ["10%", "0%", "-10%"],
+    isLeft ? ["-20%", "0%", "20%"] : ["20%", "0%", "-20%"],
   );
   const opacity = useTransform(
     scrollYProgress,
-    [0.1, 0.4, 0.6, 0.9],
+    [0.1, 0.3, 0.7, 0.9],
     [0, 1, 1, 0],
   );
   const scale = useTransform(scrollYProgress, [0.1, 0.5, 0.9], [0.9, 1, 0.9]);
-  const titleOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.5, 1],
-    [0.05, 0.2, 0.05],
-  );
+  const filter = useTransform(blurValue, (v) => `blur(${v}px)`);
 
   return (
     <section
       ref={ref}
       className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden ${data.bg}`}
     >
+      {/* Background Title (Tidak perlu ikut animasi slide bahasa agar tidak pusing) */}
       <motion.div
-        style={{ opacity: titleOpacity }}
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{ skewY: skew }}
+        className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]"
       >
-        <h1 className="text-[35vw] font-black uppercase text-transparent stroke-text whitespace-nowrap select-none">
+        <h1 className="text-[50vw] md:text-[40vw] font-black uppercase text-transparent stroke-text whitespace-nowrap select-none">
           {data.title}
         </h1>
       </motion.div>
 
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+      <div className="sticky top-0 h-screen w-full flex items-center justify-center">
         <motion.div
-          style={{ x, opacity, scale }}
-          className={`container mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center ${isLeft ? "text-left" : "text-right md:flex-row-reverse"}`}
+          style={{ x, opacity, scale, filter, skewY: skew }}
+          className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center"
         >
-          <div className={`md:col-span-8 ${!isLeft ? "md:col-start-5" : ""}`}>
-            <div
-              className={`flex items-center gap-4 mb-4 ${!isLeft ? "justify-end" : ""}`}
-            >
-              <span
-                className={`text-5xl md:text-7xl font-serif italic ${data.theme}`}
+          <div
+            className={`md:col-span-8 ${!isLeft ? "md:col-start-5 text-right" : "text-left"}`}
+          >
+            {/* INI KODE BARUNYA */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={lang} // Memicu animasi saat bahasa berubah
+                initial={{ opacity: 0, x: isLeft ? -20 : 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: isLeft ? 20 : -20 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                {data.id}
-              </span>
-              <div className="h-[1px] w-12 md:w-24 bg-white/20" />
-            </div>
-            <h2 className="text-4xl md:text-8xl font-black uppercase leading-[0.85] tracking-tighter mb-8 whitespace-pre-line">
-              {data.headline}
-            </h2>
-            <p className="text-lg md:text-2xl font-serif italic text-zinc-400 max-w-xl mx-auto md:mx-0 leading-relaxed">
-              "{data.body}"
-            </p>
+                <div
+                  className={`flex items-center gap-3 mb-4 ${!isLeft ? "justify-end" : ""}`}
+                >
+                  <span
+                    className={`text-4xl md:text-8xl font-serif italic ${data.theme}`}
+                  >
+                    {data.id}
+                  </span>
+                  <div className="h-[1px] w-10 md:w-24 bg-white/30" />
+                </div>
+                <h2 className="text-4xl md:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-6 md:mb-10 whitespace-pre-line">
+                  {data.headline}
+                </h2>
+                <p className="text-lg md:text-3xl font-serif italic text-zinc-400 leading-snug">
+                  "{data.body}"
+                </p>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>
@@ -213,30 +240,42 @@ const Section = ({ data, index }: { data: any; index: number }) => {
 export default function App() {
   const [lang, setLang] = useState<keyof typeof content>("id");
   const [mounted, setMounted] = useState(false);
+  const [noiseIntensity, setNoiseIntensity] = useState(0.05); // State untuk mengontrol intensitas noise
 
   useEffect(() => {
     setMounted(true);
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-    });
 
-    function raf(time: number) {
-      lenis.raf(time);
+    // AKTIFKAN LENIS HANYA DI DESKTOP
+    let lenis: Lenis | null = null;
+    if (window.innerWidth > 768) {
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      });
+
+      const raf = (time: number) => {
+        lenis?.raf(time);
+        requestAnimationFrame(raf);
+      };
       requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
-    return () => lenis.destroy();
+    // Animasi denyutan grain
+    const interval = setInterval(() => {
+      setNoiseIntensity((prev) => {
+        // Berdenyut antara 0.04 dan 0.08
+        return prev < 0.05 ? 0.07 : 0.05;
+      });
+    }, 1000); // Setiap 1 detik
+
+    return () => {
+      lenis?.destroy();
+      clearInterval(interval);
+    };
   }, []);
 
   const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001,
-  });
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
   if (!mounted) return <div className="bg-black min-h-screen" />;
 
@@ -247,54 +286,86 @@ export default function App() {
           __html: `
         @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,700&display=swap");
         :root { scroll-behavior: auto !important; }
-        .stroke-text { -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.15); }
+        .stroke-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); }
         .font-serif { font-family: "Playfair Display", serif; }
+
+        /* MOBILE SNAP CONFIG */
         @media (max-width: 768px) {
-          html { scroll-snap-type: y mandatory; }
-          .snap-section { scroll-snap-align: start; scroll-snap-stop: always; }
-          .stroke-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); }
+          html { 
+            scroll-snap-type: y mandatory; 
+            overflow-y: scroll;
+          }
+          .snap-section { 
+            scroll-snap-align: start; 
+            scroll-snap-stop: always; 
+          }
         }
+        
         @media (min-width: 769px) {
           html { scroll-snap-type: none !important; }
+          .stroke-text { -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.15); }
         }
-        body { overflow-x: hidden; background: black; }
+
         ::-webkit-scrollbar { display: none; }
         * { -ms-overflow-style: none; scrollbar-width: none; }
       `,
         }}
       />
 
-      {/* Visual Overlays */}
-      <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-      <div className="fixed inset-0 pointer-events-none z-40 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.5)_100%)]" />
+      {/* SVG Filter untuk Grain Effect */}
+      <svg className="fixed w-0 h-0 invisible">
+        <filter id="grainy-noise">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.6" // Ukuran grain
+            numOctaves="3"
+            seed="0"
+            stitchTiles="stitch"
+            result="noise"
+          />
+          <feColorMatrix type="saturate" values="0" />{" "}
+          {/* Desaturasi untuk hitam-putih */}
+          <feBlend in="SourceGraphic" in2="noise" mode="multiply" />{" "}
+          {/* Gabungkan dengan konten */}
+        </filter>
+      </svg>
 
       {/* Progress Bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-white origin-left z-[100] mix-blend-difference"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-amber-500 origin-left z-[100]"
         style={{ scaleX }}
       />
 
       {/* Language Switch */}
-      <div className="fixed top-8 right-8 z-[100] flex gap-2">
+      <div className="fixed top-6 right-6 z-[100] flex gap-2">
         {["id", "en"].map((l) => (
           <button
             key={l}
             onClick={() => setLang(l as any)}
-            className={`w-10 h-10 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center border ${lang === l ? "bg-white text-black border-white" : "text-zinc-500 border-white/10 hover:border-white/40"}`}
+            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${lang === l ? "bg-white text-black border-white" : "text-zinc-500 border-white/10 backdrop-blur-md"}`}
           >
             {l}
           </button>
         ))}
       </div>
 
-      {/* Hero */}
+      {/* Hero Section dengan Grain Effect */}
       <section className="relative h-screen snap-section flex flex-col justify-center items-center bg-zinc-950 overflow-hidden">
+        {/* Latar Belakang Grain */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className="relative z-10 text-center"
+          className="absolute inset-0 z-0 opacity-100"
+          style={{ filter: "url(#grainy-noise)", opacity: noiseIntensity }} // Terapkan filter dan opacity berdenyut
+          transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="text-center px-4 relative z-10"
         >
+          {" "}
+          {/* Pastikan teks di atas grain */}
           <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter">
             Budapest <br />
             <span className="stroke-text text-transparent italic">Echoes</span>
@@ -302,54 +373,55 @@ export default function App() {
         </motion.div>
       </section>
 
-      {/* Content Sections */}
+      {/* Sections */}
       <div className="relative">
         {content[lang].map((item: any, idx: number) => (
-          <Section key={`${lang}-${idx}`} data={item} index={idx} />
+          <Section
+            key={idx} // Gunakan idx agar tidak remount seluruh section, hanya kontennya
+            data={item}
+            index={idx}
+            lang={lang} // Tambahkan ini
+          />
         ))}
       </div>
 
-      {/* FOOTER (VERSI LAMA YANG DIKEMBALIKAN) */}
-      <section className="min-h-screen flex flex-col justify-center items-center bg-zinc-100 text-black p-6 md:p-12 text-center relative overflow-hidden snap-section">
-        {/* Latar belakang FIN besar */}
+      {/* Footer FIN (Versi Lama yang diperkecil untuk Mobile) */}
+      <section className="min-h-screen flex flex-col justify-center items-center bg-zinc-100 text-black p-6 text-center relative overflow-hidden snap-section">
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none select-none">
-          <h1 className="text-[45vw] md:text-[35vw] font-black leading-none -translate-x-1/4 translate-y-1/4 text-zinc-400">
+          <h1 className="text-[60vw] md:text-[35vw] font-black leading-none -translate-x-1/4 translate-y-1/4 text-zinc-400">
             FIN
           </h1>
         </div>
 
         <div className="relative z-10 w-full max-w-5xl">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
             className="flex flex-col items-center"
           >
-            <h2 className="text-5xl md:text-9xl font-black uppercase leading-[0.9] tracking-tight whitespace-pre-line mb-6 mix-blend-difference">
+            <h2 className="text-4xl md:text-9xl font-black uppercase leading-[0.9] tracking-tight mb-6 mix-blend-difference">
               {lang === "id" ? "Inilah Budapest," : "This is Budapest,"}
             </h2>
-
-            <p className="text-base md:text-xl font-serif leading-relaxed text-zinc-600 italic max-w-lg mb-12">
+            <p className="text-lg md:text-3xl font-serif leading-relaxed text-zinc-600 italic max-w-xl mb-12 px-4">
               {lang === "id"
-                ? '"mahakarya nyata masterpiece dari tangan sang ahli."'
+                ? '"mahakarya nyata dari tangan sang ahli."'
                 : '"a true masterpiece from the hands of an expert."'}
             </p>
-
             <Link href="/home">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="group flex flex-col items-center gap-4 cursor-pointer"
               >
-                <div className="w-16 h-16 rounded-full border-2 border-black flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors duration-300">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-black flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
                   <MoveRight
+                    size={28}
                     className="group-hover:translate-x-1 transition-transform"
-                    size={24}
                   />
                 </div>
-                <span className="uppercase tracking-[0.4em] text-[10px] font-black text-black">
-                  {lang === "id" ? "Menuju ke Beranda" : "Go to Home"}
+                <span className="uppercase tracking-[0.4em] text-[10px] font-black">
+                  {lang === "id" ? "Ke Beranda" : "Go Home"}
                 </span>
               </motion.div>
             </Link>
