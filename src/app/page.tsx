@@ -217,12 +217,12 @@ const Section = ({ data, index }: any) => {
   });
 
   const isLeft = index % 2 === 0;
-  const xInput = isLeft ? ["-50%", "0%", "50%"] : ["50%", "0%", "-50%"];
+  const xInput = isLeft ? ["-20%", "0%", "20%"] : ["20%", "0%", "-20%"];
   const x = useTransform(scrollYProgress, [0, 0.5, 1], xInput);
 
   const opacity = useTransform(
     scrollYProgress,
-    [0, 0.15, 0.5, 0.85, 1],
+    [0, 0.1, 0.5, 0.9, 1], // Rentang dipersempit agar teks cepat terlihat
     [0, 1, 1, 1, 0],
   );
 
@@ -243,7 +243,9 @@ const Section = ({ data, index }: any) => {
   return (
     <section
       ref={ref}
-      className={`relative h-[110vh] md:h-[150vh] flex items-center justify-center overflow-hidden ${data.bg}`}
+      // md:h-[150vh] menjaga kemewahan di desktop
+      // h-[80vh] memastikan di HP jaraknya sangat efisien dan tidak melelahkan
+      className={`relative h-[80vh] md:h-[150vh] flex items-center justify-center overflow-hidden ${data.bg}`}
     >
       <motion.div
         style={{ x: bgX, opacity: 0.15 }}
