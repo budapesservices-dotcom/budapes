@@ -115,6 +115,14 @@ const content: Record<string, any> = {
       bg: "bg-neutral-950",
     },
     {
+      id: "05",
+      title: "RAW",
+      headline: "Jujur Tanpa \nKompromi.",
+      body: "Kemewahan sejati tidak butuh polesan. Ia hadir dalam bentuk murni yang menentang definisi biasa.",
+      theme: "text-amber-500",
+      bg: "bg-zinc-950",
+    },
+    {
       id: "06",
       title: "ECHOES",
       headline: "Echoes That \nRefuse to Die.",
@@ -250,7 +258,9 @@ export default function App() {
   const [noiseIntensity, setNoiseIntensity] = useState(0.05); // State untuk mengontrol intensitas noise
 
   useEffect(() => {
-    const savedLang = localStorage.getItem("user-lang") as (keyof typeof content) | null;
+    const savedLang = localStorage.getItem("user-lang") as
+      | keyof typeof content
+      | null;
     if (savedLang && (savedLang === "id" || savedLang === "en")) {
       setLang(savedLang);
     }
