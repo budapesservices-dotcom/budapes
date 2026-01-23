@@ -10,6 +10,7 @@ import {
   useSpring,
   useVelocity,
   AnimatePresence,
+  useMotionValue,
 } from "framer-motion";
 import { MoveRight } from "lucide-react";
 
@@ -117,8 +118,8 @@ const content: Record<string, any> = {
     {
       id: "05",
       title: "RAW",
-      headline: "Jujur Tanpa \nKompromi.",
-      body: "Kemewahan sejati tidak butuh polesan. Ia hadir dalam bentuk murni yang menentang definisi biasa.",
+      headline: "Honest Without \nCompromise.",
+      body: "True luxury doesn't need polish. It exists in a pure form that defies ordinary definition.",
       theme: "text-amber-500",
       bg: "bg-zinc-950",
     },
@@ -191,14 +192,11 @@ const Section = ({
   return (
     <section
       ref={ref}
-      className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden ${data.bg}`}
+      className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden ${data.bg}/0`}
     >
       {/* Background Title (Tidak perlu ikut animasi slide bahasa agar tidak pusing) */}
-      <motion.div
-        style={{ skewY: skew }}
-        className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]"
-      >
-        <h1 className="text-[50vw] md:text-[40vw] font-black uppercase text-transparent stroke-text whitespace-nowrap select-none">
+      <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
+        <h1 className="text-[50vw] md:text-[40vw] font-black uppercase text-transparent stroke-text whitespace-nowrap">
           {data.title}
         </h1>
       </motion.div>
@@ -215,6 +213,7 @@ const Section = ({
             <AnimatePresence mode="wait">
               <motion.div
                 key={lang} // Memicu animasi saat bahasa berubah
+                className="text-center z-10 px-4"
                 initial={{ opacity: 0, x: isLeft ? -20 : 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: isLeft ? 20 : -20 }}
@@ -247,15 +246,9 @@ const Section = ({
 
 export default function App() {
   const [lang, setLang] = useState<keyof typeof content>("id");
-
-  type BlobItem = {
-    id: number;
-    color: string;
-    size: number;
-    initialPos: { x: string; y: string };
-  };
   const [mounted, setMounted] = useState(false);
   const [noiseIntensity, setNoiseIntensity] = useState(0.05); // State untuk mengontrol intensitas noise
+  const starsY = useMotionValue(0);
 
   useEffect(() => {
     const savedLang = localStorage.getItem("user-lang") as
@@ -273,6 +266,11 @@ export default function App() {
       lenis = new Lenis({
         duration: 1.2,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      });
+
+      lenis.on("scroll", (e: any) => {
+        // starsY sekarang bisa diakses karena berada dalam scope yang sama
+        starsY.set(e.scroll * -0.1);
       });
 
       const raf = (time: number) => {
@@ -307,7 +305,7 @@ export default function App() {
   };
 
   return (
-    <div className="bg-black text-zinc-100 font-sans selection:bg-amber-500">
+    <div className="bg-transparent text-zinc-100 font-sans selection:bg-amber-500">
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -335,10 +333,70 @@ export default function App() {
 
         ::-webkit-scrollbar { display: none; }
         * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .stars-container {
+        background-image: 
+         radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
+         radial-gradient(1.5px 1.5px at 40px 70px, #fff, rgba(0,0,0,0)),
+         radial-gradient(1px 1px at 50px 160px, #fff, rgba(0,0,0,0)),
+         radial-gradient(1.5px 1.5px at 90px 40px, #fff, rgba(0,0,0,0)),
+         radial-gradient(1px 1px at 130px 80px, #fff, rgba(0,0,0,0));
+         background-size: 200px 200px; /* Mengulang pola bintang */
+      }
+
+      /* Atmosfer Abu-abu Setengah Lingkaran di Bawah */
+        .atmosphere-glow {
+         background: radial-gradient(circle at 50% 100%, rgba(150, 150, 150, 0.2) 0%, transparent 70%);
+      }
+
+        .stars-global {
+        position: fixed;
+        inset: -100vh 0; 
+        height: 600vh; /* Buat tinggi 3 kali lipat layar */
+        z-index: -2;
+        background-image: 
+        radial-gradient(2px 2px at 15% 25%, #fff, rgba(0,0,0,0)),     /* Bintang besar */
+        radial-gradient(1px 1px at 85% 10%, #fff, rgba(0,0,0,0)),     /* Bintang sedang */
+        radial-gradient(2.5px 2.5px at 45% 65%, #fff, rgba(0,0,0,0)), /* Bintang sangat besar */
+        radial-gradient(1px 1px at 70% 85%, #fff, rgba(0,0,0,0)),     /* Bintang kecil */
+        radial-gradient(1.5px 1.5px at 25% 90%, #fff, rgba(0,0,0,0)); /* Bintang sedang */
+        background-size: 100px 100px;
+        opacity: 0.25;
+        background-repeat: repeat; 
+        pointer-events: none;
+        will-change: transform;
+      }
+
+      /* Atmosfer Global (Gradasi di bawah layar) */
+      .atmosphere-global {
+  position: fixed;
+  bottom: 0;      /* Tempel di paling bawah */
+  left: 0;
+  right: 0;
+  height: 20vh;   /* Batasi tinggi elemen agar blur tidak lari ke atas */
+  z-index: -1;
+  /* Kita gunakan radial-gradient yang sangat gepeng (ellipse) */
+  background: radial-gradient(
+    ellipse at 30% 170%, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.05) 40%,
+    transparent 80%
+  );
+  filter: blur(60px); /* Kurangi sedikit blur agar tidak terlalu menyebar ke atas */
+  pointer-events: none;
+}
       `,
         }}
       />
 
+      <motion.div className="stars-global" style={{ y: starsY }} />
+      <div
+        className="atmosphere-global"
+        style={{
+          filter: "url(#grainy-noise) blur(75px)",
+          opacity: 0.5, // Kurangi jika putihnya masih dirasa terlalu terang
+        }}
+      />
       {/* SVG Filter untuk Grain Effect */}
       <svg className="fixed w-0 h-0 invisible">
         <filter id="grainy-noise">
@@ -385,6 +443,8 @@ export default function App() {
           transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
         />
 
+        <div className="absolute inset-0 z-0 stars-container opacity-30" />
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -394,7 +454,7 @@ export default function App() {
           {" "}
           {/* Pastikan teks di atas grain */}
           <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter">
-            Budapest <br />
+            Budapes <br />
             <span className="stroke-text text-transparent italic">Echoes</span>
           </h1>
         </motion.div>
@@ -428,7 +488,7 @@ export default function App() {
             className="flex flex-col items-center"
           >
             <h2 className="text-4xl md:text-9xl font-black uppercase leading-[0.9] tracking-tight mb-6 mix-blend-difference">
-              {lang === "id" ? "Inilah Budapest," : "This is Budapest,"}
+              {lang === "id" ? "Inilah Budapes," : "This is Budapes,"}
             </h2>
             <p className="text-lg md:text-3xl font-serif leading-relaxed text-zinc-600 italic max-w-xl mb-12 px-4">
               {lang === "id"
