@@ -3,24 +3,8 @@
 import Link from "next/link";
 import Lenis from "lenis";
 import React, { useState, useRef, useEffect } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useSpring,
-  AnimatePresence,
-} from "framer-motion";
-import {
-  Music,
-  Play,
-  Pause,
-  ArrowDown,
-  MoveRight,
-  Radio,
-  Disc,
-  Mic2,
-  X,
-} from "lucide-react";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { MoveRight } from "lucide-react";
 
 // Data Konten
 const content: Record<string, any> = {
@@ -30,80 +14,64 @@ const content: Record<string, any> = {
       title: "SILENCE",
       headline: "Hening Yang \nMemekakkan.",
       body: "Kualitas tak pernah berteriak. Ia merambat pelan, menyusup di antara detak jantung yang ragu.",
-      meta: "Kualitas musik • I",
       theme: "text-amber-500",
       bg: "bg-zinc-950",
-      align: "left",
     },
     {
       id: "02",
       title: "DISTORT",
       headline: "Jujur Dalam \nKekacauan.",
       body: "Di sela distorsi melodi di bar reruntuhan, kita menemukan satu-satunya kebenaran yang tidak dimanipulasi.",
-      meta: "Kebenaran musik • II",
       theme: "text-red-600",
       bg: "bg-black",
-      align: "right",
     },
     {
       id: "03",
       title: "REBEL",
       headline: "Tradisi Bukan \nPenjara.",
       body: "List tidak menulis untuk menenangkanmu. Dia menulis untuk membakar apa yang kamu kira kamu tahu.",
-      meta: "Musik itu luas • III",
       theme: "text-emerald-500",
       bg: "bg-zinc-900",
-      align: "left",
     },
     {
       id: "04",
       title: "ANALOG",
       headline: "Sentuhan \nYang Hilang.",
       body: "Di dunia digital yang sempurna, ketidaksempurnaan jarum di atas piringan hitam adalah nyawa.",
-      meta: "Nyawa dari musik • IV",
       theme: "text-orange-500",
       bg: "bg-neutral-950",
-      align: "right",
     },
     {
       id: "05",
       title: "RAW",
       headline: "Jujur Tanpa \nKompromi.",
       body: "Kemewahan sejati tidak butuh polesan. Ia hadir dalam bentuk murni yang menentang definisi biasa.",
-      meta: "Bentuk dari musik • V",
       theme: "text-amber-500",
       bg: "bg-zinc-950",
-      align: "left",
     },
     {
       id: "06",
       title: "ECHOES",
       headline: "Gema Yang \nMenolak Mati.",
       body: "Waktu berlalu, getaran tetap tinggal. Kita adalah perpanjangan dari setiap suara yang abadi.",
-      meta: "Jiwa Musik • VI",
       theme: "text-red-600",
       bg: "bg-black",
-      align: "right",
     },
     {
       id: "07",
       title: "FLUX",
       headline: "Abadi Dalam \nPerubahan.",
       body: "Satu-satunya yang tetap adalah gerak. Mengalirlah tanpa kehilangan arah dan jati diri.",
-      meta: "Musik itu abadi • VII",
       theme: "text-emerald-500",
       bg: "bg-zinc-900",
-      align: "left",
     },
     {
       id: "08",
       title: "ORIGIN",
       headline: "Kembali Ke \nTitik Mula.",
       body: "Perjalanan terjauh adalah ke dalam diri. Temukan suara asli Anda di balik lapisan ekspektasi.",
-      meta: "Dalam suara musik • IX",
       theme: "text-orange-500",
       bg: "bg-neutral-950",
-      align: "right",
     },
   ],
   en: [
@@ -111,105 +79,70 @@ const content: Record<string, any> = {
       id: "01",
       title: "SILENCE",
       headline: "The \nDeafening Silence.",
-      body: "Quality never screams. It crept slowly, slipping between the hesitant heartbeats.",
-      meta: "Music quality • I",
+      body: "Quality never screams. It creeps slowly, slipping between the hesitant heartbeats.",
       theme: "text-amber-500",
       bg: "bg-zinc-950",
-      align: "left",
     },
     {
       id: "02",
       title: "DISTORT",
       headline: "Honesty in \nChaos.",
       body: "In the midst of melodic distortion in the bar of ruins, we find the only truth that is not manipulated.",
-      meta: "Music truth • II",
       theme: "text-red-600",
       bg: "bg-black",
-      align: "right",
     },
     {
       id: "03",
       title: "REBEL",
       headline: "Tradition is not \nthe Prison.",
       body: "List does not write to calm you. He writes to burn what you think you know.",
-      meta: "Music is wide • III",
       theme: "text-emerald-500",
       bg: "bg-zinc-900",
-      align: "left",
     },
     {
       id: "04",
       title: "ANALOG",
       headline: "The \nLost Touch.",
       body: "In a perfect digital world, the imperfection of the needle on a vinyl record is life.",
-      meta: "Life of music • IV",
       theme: "text-orange-500",
       bg: "bg-neutral-950",
-      align: "right",
     },
     {
       id: "05",
       title: "RAW",
       headline: "Honest Without \nCompromise.",
       body: "True luxury does not need polishing. It arrives in the form of pureness that defies ordinary definitions.",
-      meta: "Form of music • V",
       theme: "text-amber-500",
       bg: "bg-zinc-950",
-      align: "left",
     },
     {
       id: "06",
       title: "ECHOES",
       headline: "Echoes That \nRefuse to Die.",
       body: "Time passes, vibrations remain. We are the extension of every immortal sound.",
-      meta: "Soul of Music • VI",
       theme: "text-red-600",
       bg: "bg-black",
-      align: "right",
     },
     {
       id: "07",
       title: "FLUX",
       headline: "Eternal In \nChange.",
       body: "The only constant is motion. Flow without losing direction and identity.",
-      meta: "Music is eternal • VII",
       theme: "text-emerald-500",
       bg: "bg-zinc-900",
-      align: "left",
     },
     {
       id: "08",
       title: "ORIGIN",
       headline: "Return To \nStarting Point.",
       body: "The furthest journey is within yourself. Find your authentic voice beneath the layers of expectations.",
-      meta: "In the sound of music • IX",
       theme: "text-orange-500",
       bg: "bg-neutral-950",
-      align: "right",
     },
   ],
 };
-const Grain = () => (
-  <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.04] mix-blend-overlay">
-    <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-      <filter id="noiseFilter">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.8"
-          numOctaves="3"
-          stitchTiles="stitch"
-        />
-      </filter>
-      <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-    </svg>
-  </div>
-);
 
-const Vignette = () => (
-  <div className="fixed inset-0 pointer-events-none z-40 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
-);
-
-const Section = ({ data, index }: any) => {
+const Section = ({ data, index }: { data: any; index: number }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -217,72 +150,59 @@ const Section = ({ data, index }: any) => {
   });
 
   const isLeft = index % 2 === 0;
-  const xInput = isLeft ? ["-20%", "0%", "20%"] : ["20%", "0%", "-20%"];
-  const x = useTransform(scrollYProgress, [0, 0.5, 1], xInput);
-
-  const opacity = useTransform(
-    scrollYProgress,
-    [0, 0.1, 0.5, 0.9, 1], // Rentang dipersempit agar teks cepat terlihat
-    [0, 1, 1, 1, 0],
-  );
-
-  const blurVal = useTransform(
+  const x = useTransform(
     scrollYProgress,
     [0, 0.5, 1],
-    ["10px", "0px", "10px"],
+    isLeft ? ["-10%", "0%", "10%"] : ["10%", "0%", "-10%"],
   );
-  const filter = useTransform(blurVal, (v) => `blur(${v})`);
-
-  // --- HANYA GUNAKAN SATU DEKLARASI SCALE DI BAWAH INI ---
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.9, 1, 0.9]);
-  // ------------------------------------------------------
-
-  const bgXInput = isLeft ? ["20%", "-20%"] : ["-20%", "20%"];
-  const bgX = useTransform(scrollYProgress, [0, 1], bgXInput);
+  const opacity = useTransform(
+    scrollYProgress,
+    [0.1, 0.4, 0.6, 0.9],
+    [0, 1, 1, 0],
+  );
+  const scale = useTransform(scrollYProgress, [0.1, 0.5, 0.9], [0.9, 1, 0.9]);
+  const titleOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.5, 1],
+    [0.05, 0.2, 0.05],
+  );
 
   return (
     <section
       ref={ref}
-      // md:h-[150vh] menjaga kemewahan di desktop
-      // h-[80vh] memastikan di HP jaraknya sangat efisien dan tidak melelahkan
-      className={`relative h-[80vh] md:h-[150vh] flex items-center justify-center overflow-hidden ${data.bg}`}
+      className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden ${data.bg}`}
     >
       <motion.div
-        style={{ x: bgX, opacity: 0.15 }}
-        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
+        style={{ opacity: titleOpacity }}
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
       >
-        <h1 className="text-[30vw] md:text-[35vw] font-black uppercase leading-none tracking-tighter text-transparent stroke-text whitespace-nowrap will-change-transform">
+        <h1 className="text-[35vw] font-black uppercase text-transparent stroke-text whitespace-nowrap select-none">
           {data.title}
         </h1>
       </motion.div>
 
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
         <motion.div
-          style={{ x, opacity, filter, scale }}
-          className={`relative z-10 container mx-auto px-8 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-12 items-center will-change-transform ${isLeft ? "text-left" : "text-right md:flex-row-reverse"}`}
+          style={{ x, opacity, scale }}
+          className={`container mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center ${isLeft ? "text-left" : "text-right md:flex-row-reverse"}`}
         >
           <div className={`md:col-span-8 ${!isLeft ? "md:col-start-5" : ""}`}>
             <div
-              className={`flex items-center gap-4 mb-6 ${!isLeft ? "justify-end" : ""} overflow-hidden`}
+              className={`flex items-center gap-4 mb-4 ${!isLeft ? "justify-end" : ""}`}
             >
-              <span className={`text-6xl font-serif italic ${data.theme}`}>
+              <span
+                className={`text-5xl md:text-7xl font-serif italic ${data.theme}`}
+              >
                 {data.id}
               </span>
-              <div className="h-[1px] w-20 bg-white/30" />
-              <span className="text-xs uppercase tracking-[0.3em] text-zinc-400">
-                {data.meta}
-              </span>
+              <div className="h-[1px] w-12 md:w-24 bg-white/20" />
             </div>
-            <h2 className="text-4xl md:text-9xl font-black uppercase leading-[0.9] tracking-tighter whitespace-pre-line mb-6 mix-blend-difference">
+            <h2 className="text-4xl md:text-8xl font-black uppercase leading-[0.85] tracking-tighter mb-8 whitespace-pre-line">
               {data.headline}
             </h2>
-            <div
-              className={`flex flex-col ${!isLeft ? "items-end" : "items-start"}`}
-            >
-              <p className="text-lg md:text-xl font-serif leading-relaxed text-zinc-300 italic max-w-lg">
-                "{data.body}"
-              </p>
-            </div>
+            <p className="text-lg md:text-2xl font-serif italic text-zinc-400 max-w-xl mx-auto md:mx-0 leading-relaxed">
+              "{data.body}"
+            </p>
           </div>
         </motion.div>
       </div>
@@ -292,19 +212,25 @@ const Section = ({ data, index }: any) => {
 
 export default function App() {
   const [lang, setLang] = useState<keyof typeof content>("id");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const lenis = new Lenis();
+    setMounted(true);
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
 
     function raf(time: number) {
       lenis.raf(time);
       requestAnimationFrame(raf);
     }
+
     requestAnimationFrame(raf);
     return () => lenis.destroy();
   }, []);
 
-  const [isPlaying, setIsPlaying] = useState(false);
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -312,103 +238,80 @@ export default function App() {
     restDelta: 0.001,
   });
 
-  const cursorX = useSpring(0, { stiffness: 500, damping: 50 });
-  const cursorY = useSpring(0, { stiffness: 500, damping: 50 });
-
-  const t = content[lang];
-  useEffect(() => {
-    const moveCursor = (e: any) => {
-      cursorX.set(e.clientX - 24);
-      cursorY.set(e.clientY - 24);
-    };
-    window.addEventListener("mousemove", moveCursor);
-    return () => window.removeEventListener("mousemove", moveCursor);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    const savedLang = localStorage.getItem("user-lang");
-    // Validasi apakah nilainya benar-benar "id" atau "en"
-    if (savedLang === "id" || savedLang === "en") {
-      setLang(savedLang as keyof typeof content);
-    }
-  }, []);
-
-  const changeLanguage = (newLang: "id" | "en") => {
-    setLang(newLang);
-    localStorage.setItem("user-lang", newLang); // Ini kuncinya agar sinkron ke 404
-  };
+  if (!mounted) return <div className="bg-black min-h-screen" />;
 
   return (
-    <div className="bg-black text-zinc-100 font-sans selection:bg-amber-500 selection:text-black overflow-x-hidden">
-      <Grain />
-      <Vignette />
+    <div className="bg-black text-zinc-100 font-sans selection:bg-amber-500">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,700&display=swap");
+        :root { scroll-behavior: auto !important; }
+        .stroke-text { -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.15); }
+        .font-serif { font-family: "Playfair Display", serif; }
+        @media (max-width: 768px) {
+          html { scroll-snap-type: y mandatory; }
+          .snap-section { scroll-snap-align: start; scroll-snap-stop: always; }
+          .stroke-text { -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1); }
+        }
+        @media (min-width: 769px) {
+          html { scroll-snap-type: none !important; }
+        }
+        body { overflow-x: hidden; background: black; }
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+      `,
+        }}
+      />
 
+      {/* Visual Overlays */}
+      <div className="fixed inset-0 pointer-events-none z-50 opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+      <div className="fixed inset-0 pointer-events-none z-40 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.5)_100%)]" />
+
+      {/* Progress Bar */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-1 bg-white origin-left z-50 mix-blend-difference"
+        className="fixed top-0 left-0 right-0 h-1 bg-white origin-left z-[100] mix-blend-difference"
         style={{ scaleX }}
       />
 
-      {/* Language Toggle */}
-      <div className="fixed top-8 right-8 z-[100] flex gap-3 text-[10px] font-black tracking-[0.2em] mix-blend-difference uppercase">
-        <button
-          onClick={() => changeLanguage("id")}
-          className={`transition-colors duration-300 ${lang === "id" ? "text-white" : "text-zinc-500"}`}
-        >
-          IN
-        </button>
-        <span className="text-zinc-500">/</span>
-        <button
-          onClick={() => changeLanguage("en")}
-          className={`transition-colors duration-300 ${lang === "en" ? "text-white" : "text-zinc-500"}`}
-        >
-          EN
-        </button>
+      {/* Language Switch */}
+      <div className="fixed top-8 right-8 z-[100] flex gap-2">
+        {["id", "en"].map((l) => (
+          <button
+            key={l}
+            onClick={() => setLang(l as any)}
+            className={`w-10 h-10 rounded-full text-[10px] font-bold uppercase transition-all flex items-center justify-center border ${lang === l ? "bg-white text-black border-white" : "text-zinc-500 border-white/10 hover:border-white/40"}`}
+          >
+            {l}
+          </button>
+        ))}
       </div>
 
-      <motion.div
-        className="fixed top-0 left-0 w-12 h-12 rounded-full border border-white/50 backdrop-blur-[2px] pointer-events-none z-[100] hidden md:flex items-center justify-center mix-blend-difference pointer-events-none"
-        style={{ x: cursorX, y: cursorY }}
-      >
-        <div className="w-1 h-1 bg-white rounded-full" />
-      </motion.div>
-
-      <section className="relative h-[120vh] flex flex-col justify-center items-center p-6 bg-zinc-950 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-white opacity-[0.03] rounded-full blur-[150px] animate-pulse" />
-
+      {/* Hero */}
+      <section className="relative h-screen snap-section flex flex-col justify-center items-center bg-zinc-950 overflow-hidden">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0, filter: "blur(20px)" }}
-          animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
-          transition={{ duration: 1.5, ease: "circOut" }}
-          className="relative z-10 text-center mix-blend-difference"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="relative z-10 text-center"
         >
-          <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter italic text-white mix-blend-difference">
-            Budapes <br />
-            <span className="stroke-text text-transparent relative">
-              Echoes
-              <motion.span
-                className="absolute -top-4 -right-4 text-2xl md:text-4xl text-white font-serif not-italic tracking-normal"
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
-              >
-                *
-              </motion.span>
-            </span>
+          <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter">
+            Budapest <br />
+            <span className="stroke-text text-transparent italic">Echoes</span>
           </h1>
         </motion.div>
       </section>
 
-      <div className="relative z-10">
+      {/* Content Sections */}
+      <div className="relative">
         {content[lang].map((item: any, idx: number) => (
           <Section key={`${lang}-${idx}`} data={item} index={idx} />
         ))}
       </div>
 
-      {/* Bagian Akhir yang Diperbarui */}
-      <section className="min-h-screen flex flex-col justify-center items-center bg-zinc-100 text-black p-6 md:p-12 text-center relative overflow-hidden">
+      {/* FOOTER (VERSI LAMA YANG DIKEMBALIKAN) */}
+      <section className="min-h-screen flex flex-col justify-center items-center bg-zinc-100 text-black p-6 md:p-12 text-center relative overflow-hidden snap-section">
+        {/* Latar belakang FIN besar */}
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none select-none">
           <h1 className="text-[45vw] md:text-[35vw] font-black leading-none -translate-x-1/4 translate-y-1/4 text-zinc-400">
             FIN
@@ -433,7 +336,6 @@ export default function App() {
                 : '"a true masterpiece from the hands of an expert."'}
             </p>
 
-            {/* Tombol yang sudah diubah menjadi Link ke /home */}
             <Link href="/home">
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -454,14 +356,6 @@ export default function App() {
           </motion.div>
         </div>
       </section>
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,700&display=swap');
-        .stroke-text {-webkit-text-stroke: 1px rgba(255,255,255,0.1); }
-        .font-serif { font-family: 'Playfair Display', serif; }
-        .perspective-container { perspective: 1500px; }
-        .transform-style-3d { transform-style: preserve-3d; }
-      `}</style>
     </div>
   );
 }
