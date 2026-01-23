@@ -219,25 +219,31 @@ const Section = ({ data, index }: any) => {
   const isLeft = index % 2 === 0;
   const xInput = isLeft ? ["-50%", "0%", "50%"] : ["50%", "0%", "-50%"];
   const x = useTransform(scrollYProgress, [0, 0.5, 1], xInput);
+
   const opacity = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.5, 0.8, 1],
-    [0, 0, 1, 0, 0],
+    [0, 0.15, 0.5, 0.85, 1],
+    [0, 1, 1, 1, 0],
   );
+
   const blurVal = useTransform(
     scrollYProgress,
     [0, 0.5, 1],
     ["10px", "0px", "10px"],
   );
   const filter = useTransform(blurVal, (v) => `blur(${v})`);
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1, 0.8]);
+
+  // --- HANYA GUNAKAN SATU DEKLARASI SCALE DI BAWAH INI ---
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.9, 1, 0.9]);
+  // ------------------------------------------------------
+
   const bgXInput = isLeft ? ["20%", "-20%"] : ["-20%", "20%"];
   const bgX = useTransform(scrollYProgress, [0, 1], bgXInput);
 
   return (
     <section
       ref={ref}
-      className={`relative h-[150vh] flex items-center justify-center overflow-hidden ${data.bg}`}
+      className={`relative h-[110vh] md:h-[150vh] flex items-center justify-center overflow-hidden ${data.bg}`}
     >
       <motion.div
         style={{ x: bgX, opacity: 0.15 }}
