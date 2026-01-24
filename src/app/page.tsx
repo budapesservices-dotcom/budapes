@@ -248,12 +248,14 @@ const Section = ({
 export default function App() {
   const [lang, setLang] = useState<keyof typeof content>("id");
   const [mounted, setMounted] = useState(false);
-  const [noiseIntensity, setNoiseIntensity] = useState(0.05); // State untuk mengontrol intensitas noise
+  const [noiseIntensity, setNoiseIntensity] = useState(0.05);
   const starsY = useMotionValue(0);
+  const { scrollYProgress } = useScroll(); // Pindahkan ke atas agar bisa dibaca useEffect
 
-  const { scrollYProgress } = useScroll();
-  
   useEffect(() => {
+    setMounted(true);
+
+    // 1. Ambil bahasa dari localStorage dengan aman
     const savedLang = localStorage.getItem("user-lang") as
       | keyof typeof content
       | null;
@@ -261,27 +263,26 @@ export default function App() {
       setLang(savedLang);
     }
 
-    if (window.innerWidth <= 768) {
-      // Memberitahukan TypeScript bahwa 'latest' adalah angka (number)
-      const unsubscribe = scrollYProgress.on("change", (latest: number) => {
-        starsY.set(latest * -0.1);
-      });
+    // 2. Cek apakah perangkat mobile
+    const isMobile = window.innerWidth <= 768;
 
-      return () => unsubscribe();
+    // 3. Fallback Bintang untuk Mobile (Karena Lenis mati)
+    let unsubscribe: () => void;
+    if (isMobile) {
+      unsubscribe = scrollYProgress.on("change", (latest: number) => {
+        starsY.set(latest * -200); // Gerakkan bintang saat scroll mobile
+      });
     }
 
-    setMounted(true);
-
-    // AKTIFKAN LENIS HANYA DI DESKTOP
+    // 4. Inisialisasi Lenis hanya untuk Desktop
     let lenis: Lenis | null = null;
-    if (window.innerWidth > 768) {
+    if (!isMobile) {
       lenis = new Lenis({
         duration: 1.2,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       });
 
       lenis.on("scroll", (e: any) => {
-        // starsY sekarang bisa diakses karena berada dalam scope yang sama
         starsY.set(e.scroll * -0.1);
       });
 
@@ -292,20 +293,19 @@ export default function App() {
       requestAnimationFrame(raf);
     }
 
-    // Animasi denyutan grain
+    // 5. Animasi denyutan grain
     const interval = setInterval(() => {
-      setNoiseIntensity((prev) => {
-        // Berdenyut antara 0.04 dan 0.08
-        return prev < 0.05 ? 0.07 : 0.05;
-      });
-    }, 1000); // Setiap 1 detik
+      setNoiseIntensity((prev) => (prev < 0.05 ? 0.07 : 0.05));
+    }, 1000);
 
     return () => {
       lenis?.destroy();
       clearInterval(interval);
+      if (unsubscribe) unsubscribe(); // Hapus listener mobile saat pindah halaman
     };
-  }, [scrollYProgress, starsY]);
+  }, [scrollYProgress, starsY]); // Masukkan dependency agar tidak error
 
+  // Spring untuk progress bar
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
   if (!mounted) return <div className="bg-black min-h-screen" />;
