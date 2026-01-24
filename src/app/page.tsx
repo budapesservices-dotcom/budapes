@@ -188,6 +188,7 @@ const Section = ({
   );
   const scale = useTransform(scrollYProgress, [0.1, 0.5, 0.9], [0.9, 1, 0.9]);
   const filter = useTransform(blurValue, (v) => `blur(${v}px)`);
+  const { scrollY } = useScroll();
 
   return (
     <section
@@ -250,12 +251,23 @@ export default function App() {
   const [noiseIntensity, setNoiseIntensity] = useState(0.05); // State untuk mengontrol intensitas noise
   const starsY = useMotionValue(0);
 
+  const { scrollYProgress } = useScroll();
+  
   useEffect(() => {
     const savedLang = localStorage.getItem("user-lang") as
       | keyof typeof content
       | null;
     if (savedLang && (savedLang === "id" || savedLang === "en")) {
       setLang(savedLang);
+    }
+
+    if (window.innerWidth <= 768) {
+      // Memberitahukan TypeScript bahwa 'latest' adalah angka (number)
+      const unsubscribe = scrollYProgress.on("change", (latest: number) => {
+        starsY.set(latest * -0.1);
+      });
+
+      return () => unsubscribe();
     }
 
     setMounted(true);
@@ -292,9 +304,8 @@ export default function App() {
       lenis?.destroy();
       clearInterval(interval);
     };
-  }, []);
+  }, [scrollYProgress, starsY]);
 
-  const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
   if (!mounted) return <div className="bg-black min-h-screen" />;
