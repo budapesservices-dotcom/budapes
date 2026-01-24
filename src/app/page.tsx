@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import Lenis from "lenis";
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -14,6 +13,7 @@ import {
 } from "framer-motion";
 import { MoveRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import SharedLoading from "../lib/SharedLoading";
 
 // Data Konten
 const content: Record<string, any> = {
@@ -154,7 +154,6 @@ const content: Record<string, any> = {
 const Section = ({
   data,
   index,
-  lang,
 }: {
   data: any;
   index: number;
@@ -189,14 +188,12 @@ const Section = ({
   );
   const scale = useTransform(scrollYProgress, [0.1, 0.5, 0.9], [0.9, 1, 0.9]);
   const filter = useTransform(blurValue, (v) => `blur(${v}px)`);
-  const { scrollY } = useScroll();
 
   return (
     <section
       ref={ref}
-      className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden ${data.bg}/0`}
+      className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden bg-transparent`}
     >
-      {/* Background Title (Tidak perlu ikut animasi slide bahasa agar tidak pusing) */}
       <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
         <h1 className="text-[50vw] md:text-[40vw] font-black uppercase text-transparent stroke-text whitespace-nowrap">
           {data.title}
@@ -211,34 +208,17 @@ const Section = ({
           <div
             className={`md:col-span-8 ${!isLeft ? "md:col-start-5 text-right" : "text-left"}`}
           >
-            {/* INI KODE BARUNYA */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={lang} // Memicu animasi saat bahasa berubah
-                className="text-center z-10 px-4"
-                initial={{ opacity: 0, x: isLeft ? -20 : 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: isLeft ? 20 : -20 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                <div
-                  className={`flex items-center gap-3 mb-4 ${!isLeft ? "justify-end" : ""}`}
-                >
-                  <span
-                    className={`text-4xl md:text-8xl font-serif italic ${data.theme}`}
-                  >
-                    {data.id}
-                  </span>
-                  <div className="h-[1px] w-10 md:w-24 bg-white/30" />
-                </div>
-                <h2 className="text-4xl md:text-9xl font-black uppercase leading-[0.85] tracking-tighter mb-6 md:mb-10 whitespace-pre-line">
-                  {data.headline}
-                </h2>
-                <p className="text-lg md:text-3xl font-serif italic text-zinc-400 leading-snug">
-                  "{data.body}"
-                </p>
-              </motion.div>
-            </AnimatePresence>
+            <motion.span
+              className={`text-xs md:text-sm font-bold tracking-[0.5em] uppercase mb-4 block ${data.theme}`}
+            >
+              {data.id} / {data.title}
+            </motion.span>
+            <h2 className="text-5xl md:text-8xl font-black uppercase leading-[0.9] tracking-tighter mb-6 whitespace-pre-line">
+              {data.headline}
+            </h2>
+            <p className="text-base md:text-lg text-zinc-400 max-w-md leading-relaxed font-medium">
+              {data.body}
+            </p>
           </div>
         </motion.div>
       </div>
@@ -323,27 +303,22 @@ export default function App() {
       <AnimatePresence mode="wait">
         {isExiting && (
           <motion.div
-            key="loader" // Tambahkan key agar Framer Motion tahu elemen mana yang berubah
+            key="loader"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "-100%" }}
             transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-            className="fixed inset-0 bg-zinc-950 z-[999] flex items-center justify-center"
+            className="fixed inset-0 bg-zinc-950 z-[999]"
           >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-center gap-4"
-            >
-              <div className="w-12 h-[1px] bg-amber-500 animate-pulse" />
-              <span className="text-[10px] tracking-[0.5em] uppercase text-zinc-500">
-                Entering Budapest
-              </span>
-            </motion.div>
+            <SharedLoading
+              onComplete={() => {
+                /* optional callback */
+              }}
+            />
           </motion.div>
         )}
       </AnimatePresence>
+      ;
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -531,7 +506,7 @@ export default function App() {
                 setIsExiting(true);
                 setTimeout(() => {
                   router.push("/home");
-                }, 800);
+                }, 4000); // Naikkan durasi agar animasi GSAP sempat selesai
               }}
             >
               <motion.div
