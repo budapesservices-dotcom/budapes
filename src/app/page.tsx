@@ -13,6 +13,7 @@ import {
   useMotionValue,
 } from "framer-motion";
 import { MoveRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Data Konten
 const content: Record<string, any> = {
@@ -251,6 +252,8 @@ export default function App() {
   const [noiseIntensity, setNoiseIntensity] = useState(0.05);
   const starsY = useMotionValue(0);
   const { scrollYProgress } = useScroll(); // Pindahkan ke atas agar bisa dibaca useEffect
+  const [isExiting, setIsExiting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -317,6 +320,30 @@ export default function App() {
 
   return (
     <div className="bg-transparent text-zinc-100 font-sans selection:bg-amber-500">
+      <AnimatePresence mode="wait">
+        {isExiting && (
+          <motion.div
+            key="loader" // Tambahkan key agar Framer Motion tahu elemen mana yang berubah
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "-100%" }}
+            transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+            className="fixed inset-0 bg-zinc-950 z-[999] flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col items-center gap-4"
+            >
+              <div className="w-12 h-[1px] bg-amber-500 animate-pulse" />
+              <span className="text-[10px] tracking-[0.5em] uppercase text-zinc-500">
+                Entering Budapest
+              </span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -399,7 +426,6 @@ export default function App() {
       `,
         }}
       />
-
       <motion.div className="stars-global" style={{ y: starsY }} />
       <div
         className="atmosphere-global"
@@ -425,13 +451,11 @@ export default function App() {
           {/* Gabungkan dengan konten */}
         </filter>
       </svg>
-
       {/* Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-[2px] bg-amber-500 origin-left z-[100]"
         style={{ scaleX }}
       />
-
       {/* Language Switch */}
       <div className="fixed top-6 right-6 z-[100] flex gap-2">
         {["id", "en"].map((l) => (
@@ -444,7 +468,6 @@ export default function App() {
           </button>
         ))}
       </div>
-
       {/* Hero Section dengan Grain Effect */}
       <section className="relative h-screen snap-section flex flex-col justify-center items-center bg-zinc-950 overflow-hidden">
         {/* Latar Belakang Grain */}
@@ -470,7 +493,6 @@ export default function App() {
           </h1>
         </motion.div>
       </section>
-
       {/* Sections */}
       <div className="relative">
         {(content[lang] ?? []).map((item: any, idx: number) => (
@@ -482,7 +504,6 @@ export default function App() {
           />
         ))}
       </div>
-
       {/* Footer FIN (Versi Lama yang diperkecil untuk Mobile) */}
       <section className="min-h-screen flex flex-col justify-center items-center bg-zinc-100 text-black p-6 text-center relative overflow-hidden snap-section">
         <div className="absolute inset-0 opacity-[0.05] pointer-events-none select-none">
@@ -490,7 +511,6 @@ export default function App() {
             FIN
           </h1>
         </div>
-
         <div className="relative z-10 w-full max-w-5xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -506,7 +526,14 @@ export default function App() {
                 ? '"mahakarya nyata dari tangan sang ahli."'
                 : '"a true masterpiece from the hands of an expert."'}
             </p>
-            <Link href="/home">
+            <div
+              onClick={() => {
+                setIsExiting(true);
+                setTimeout(() => {
+                  router.push("/home");
+                }, 800);
+              }}
+            >
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -522,7 +549,7 @@ export default function App() {
                   {lang === "id" ? "Ke Beranda" : "Go Home"}
                 </span>
               </motion.div>
-            </Link>
+            </div>
           </motion.div>
         </div>
       </section>
