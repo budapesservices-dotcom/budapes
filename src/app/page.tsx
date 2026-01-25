@@ -194,12 +194,6 @@ const Section = ({
       ref={ref}
       className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden bg-transparent`}
     >
-      <motion.div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
-        <h1 className="text-[50vw] md:text-[40vw] font-black uppercase text-transparent stroke-text whitespace-nowrap">
-          {data.title}
-        </h1>
-      </motion.div>
-
       <div className="sticky top-0 h-screen w-full flex items-center justify-center">
         <motion.div
           style={{ x, opacity, scale, filter, skewY: skew }}
@@ -318,7 +312,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      ;
+
       <style
         dangerouslySetInnerHTML={{
           __html: `

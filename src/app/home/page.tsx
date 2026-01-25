@@ -110,25 +110,29 @@ export default function App() {
 
   // --- LOGIKA TOMBOL BACK BROWSER (POPSTATE) ---
   useEffect(() => {
-    // Push state agar browser punya history untuk di-pop
-    window.history.pushState(null, "", window.location.href);
-
     const handleBackButton = (e: PopStateEvent) => {
+      // Jika kita sudah sedang proses navigasi, jangan lakukan apa-apa
+      if (backHandledRef.current) return;
+
       e.preventDefault();
-      if (backHandledRef.current) return; // sudah sedang diproses
       backHandledRef.current = true;
 
-      // Jalankan exit animation lalu navigasi
-      setNextUrl("/");
+      // Mulai animasi transisi keluar
       setIsExiting(true);
 
-      // Lepaskan listener agar tidak tertrigger lagi
-      window.removeEventListener("popstate", handleBackButton);
+      // Gunakan replace agar history yang berantakan tertimpa dengan halaman tujuan
+      setTimeout(() => {
+        router.replace("/"); // Kembali ke Welcome Page
+      }, 3000);
     };
 
     window.addEventListener("popstate", handleBackButton);
-    return () => window.removeEventListener("popstate", handleBackButton);
-  }, []);
+
+    return () => {
+      window.removeEventListener("popstate", handleBackButton);
+      backHandledRef.current = false;
+    };
+  }, [router]);
 
   const changeLanguage = (newLang: "in" | "en") => {
     setLang(newLang);
