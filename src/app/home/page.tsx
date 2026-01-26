@@ -4,105 +4,36 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import SharedLoading from "@/lib/SharedLoading";
-function LiquidCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+function LiquidBackground() {
+  const [time, setTime] = useState(0);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if ("paintWorklet" in CSS) {
+      // @ts-ignore
+      CSS.paintWorklet.addModule("/liquid-worklet.js");
+    }
 
     let animationFrameId: number;
-    let time = 0;
-
-    // --- RUMUS NOISE BARU (LEBIH KOMPLEKS & BERGELOMBANG) ---
-    const fluidNoise = (x: number, y: number, z: number) => {
-      // Layer 1: Gelombang dasar besar
-      const n1 = Math.sin(x * 0.005 + z);
-      const n2 = Math.sin(y * 0.005 + z);
-
-      // Layer 2: Detail gelombang kecil (Kunci agar terlihat 'rippled')
-      const n3 = Math.sin((x + y) * 0.01 + z * 2);
-      const n4 = Math.cos(Math.sqrt(x * x + y * y) * 0.008 + z);
-
-      // Menggabungkan semua layer
-      return (n1 + n2 + n3 + n4) / 3;
+    const animate = () => {
+      setTime((prev) => prev + 0.0025);
+      animationFrameId = requestAnimationFrame(animate);
     };
+    animate();
 
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.scale(dpr, dpr);
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
-    };
-
-    const draw = () => {
-      time += 0.0025; // Kecepatan aliran
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const centerX = w / 2;
-      const centerY = h / 2;
-
-      // Membuat 35 garis agar terlihat padat & cair
-      for (let i = 0; i < 35; i++) {
-        ctx.beginPath();
-
-        // Style Solid
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.12 + (i % 3) * 0.05})`;
-        ctx.lineWidth = i % 5 === 0 ? 2 : 1.2;
-        ctx.lineCap = "round";
-
-        const baseRadius = 30 + i * 35; // Jarak dasar
-
-        // Loop sudut lingkaran
-        for (let angle = 0; angle <= Math.PI * 2.1; angle += 0.02) {
-          // Posisi lingkaran dasar
-          const cosA = Math.cos(angle);
-          const sinA = Math.sin(angle);
-          const rawX = centerX + cosA * baseRadius;
-          const rawY = centerY + sinA * baseRadius;
-
-          // --- LOGIKA DISTORSI KUAT ---
-          // Kita mengambil sample noise berdasarkan posisi titik
-          const noiseValue = fluidNoise(rawX, rawY, time + i * 0.05);
-
-          // DISTORTION FACTOR: Angka 250 di bawah ini menentukan seberapa 'liar' gelombangnya.
-          // Semakin besar angka, semakin jauh garis meliuk dari posisi aslinya.
-          const displacement = noiseValue * 250;
-
-          // Menerapkan distorsi ke posisi X dan Y
-          const x = rawX + cosA * displacement;
-          const y = rawY + sinA * displacement;
-
-          if (angle === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-
-      animationFrameId = requestAnimationFrame(draw);
-    };
-
-    window.addEventListener("resize", resize);
-    resize();
-    draw();
-
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(animationFrameId);
-    };
+    return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
+    <div
       className="absolute inset-0 w-full h-full"
-      style={{ filter: "contrast(1.3)" }} // Contrast tinggi agar garis makin tegas
+      style={
+        {
+          // @ts-ignore
+          background: "paint(liquid-background)",
+          "--fluid-time": time,
+          filter: "contrast(1.3)",
+        } as any
+      }
     />
   );
 }
@@ -113,15 +44,13 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState(false);
   const [lang, setLang] = useState<"in" | "en">("in");
-
   // State Transisi
   const [showLoading, setShowLoading] = useState(true); // Animasi Masuk
   const [isExiting, setIsExiting] = useState(false); // Animasi Keluar
   const [nextUrl, setNextUrl] = useState<string | null>(null); // Tujuan URL
-
   const router = useRouter();
   const backHandledRef = useRef(false); // prevent duplicate popstate handling
-
+  const [targetUrl, setTargetUrl] = useState(""); // Tambahkan ini agar tidak garis merah
   // --- CONTENT DATA (Tetap Sama) ---
   const content = {
     in: {
@@ -224,7 +153,7 @@ export default function App() {
 
       // Gunakan replace agar history yang berantakan tertimpa dengan halaman tujuan
       setTimeout(() => {
-        router.replace("/"); // Kembali ke Welcome Page
+        router.replace("/."); // Kembali ke Welcome Page
       }, 3000);
     };
 
@@ -308,10 +237,14 @@ export default function App() {
       >
         {/* --- BACKGROUND --- */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none bg-[#050505]">
-          <LiquidCanvas />
+          {/* Cukup panggil komponennya di sini, garis merah akan hilang */}
+          <LiquidBackground />
 
           {/* Vignette Gelap agar teks tajam */}
-          <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/10 to-black/80 opacity-100" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle,_transparent_20%,_rgba(0,0,0,0.8)_100%)] opacity-100" />
+
+          {/* Vignette Gelap (Tetap dipertahankan agar teks tajam) */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle,_transparent_20%,_rgba(0,0,0,0.8)_100%)] opacity-100" />
         </div>
 
         {/* --- NAVBAR --- */}
@@ -581,6 +514,11 @@ export default function App() {
             © {new Date().getFullYear()} Budapes Studio
           </p>
         </footer>
+        <AnimatePresence>
+          {isExiting && (
+            <SharedLoading onComplete={() => router.push(targetUrl)} />
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
