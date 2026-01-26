@@ -4,6 +4,108 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import SharedLoading from "@/lib/SharedLoading";
+function LiquidCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let time = 0;
+
+    // --- RUMUS NOISE BARU (LEBIH KOMPLEKS & BERGELOMBANG) ---
+    const fluidNoise = (x: number, y: number, z: number) => {
+      // Layer 1: Gelombang dasar besar
+      const n1 = Math.sin(x * 0.005 + z);
+      const n2 = Math.sin(y * 0.005 + z);
+
+      // Layer 2: Detail gelombang kecil (Kunci agar terlihat 'rippled')
+      const n3 = Math.sin((x + y) * 0.01 + z * 2);
+      const n4 = Math.cos(Math.sqrt(x * x + y * y) * 0.008 + z);
+
+      // Menggabungkan semua layer
+      return (n1 + n2 + n3 + n4) / 3;
+    };
+
+    const resize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+    };
+
+    const draw = () => {
+      time += 0.0025; // Kecepatan aliran
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const centerX = w / 2;
+      const centerY = h / 2;
+
+      // Membuat 35 garis agar terlihat padat & cair
+      for (let i = 0; i < 35; i++) {
+        ctx.beginPath();
+
+        // Style Solid
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.12 + (i % 3) * 0.05})`;
+        ctx.lineWidth = i % 5 === 0 ? 2 : 1.2;
+        ctx.lineCap = "round";
+
+        const baseRadius = 30 + i * 35; // Jarak dasar
+
+        // Loop sudut lingkaran
+        for (let angle = 0; angle <= Math.PI * 2.1; angle += 0.02) {
+          // Posisi lingkaran dasar
+          const cosA = Math.cos(angle);
+          const sinA = Math.sin(angle);
+          const rawX = centerX + cosA * baseRadius;
+          const rawY = centerY + sinA * baseRadius;
+
+          // --- LOGIKA DISTORSI KUAT ---
+          // Kita mengambil sample noise berdasarkan posisi titik
+          const noiseValue = fluidNoise(rawX, rawY, time + i * 0.05);
+
+          // DISTORTION FACTOR: Angka 250 di bawah ini menentukan seberapa 'liar' gelombangnya.
+          // Semakin besar angka, semakin jauh garis meliuk dari posisi aslinya.
+          const displacement = noiseValue * 250;
+
+          // Menerapkan distorsi ke posisi X dan Y
+          const x = rawX + cosA * displacement;
+          const y = rawY + sinA * displacement;
+
+          if (angle === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      animationFrameId = requestAnimationFrame(draw);
+    };
+
+    window.addEventListener("resize", resize);
+    resize();
+    draw();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full"
+      style={{ filter: "contrast(1.3)" }} // Contrast tinggi agar garis makin tegas
+    />
+  );
+}
 
 export default function App() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -47,11 +149,11 @@ export default function App() {
       ],
       menuLabel: "Layanan & Legal",
       extendedMenu: [
-        { label: "Berita" },
-        { label: "Konsultasi" },
-        { label: "Tutorial" },
-        { label: "Kebijakan Privasi" },
-        { label: "Dukungan" },
+        { label: "Berita", href: "/news" },
+        { label: "Konsultasi", href: "/consultation" },
+        { label: "Tutorial", href: "/tutorial" },
+        { label: "Kebijakan Privasi", href: "/privacy-policy" },
+        { label: "Dukungan", href: "/support" },
       ],
       helpText: "Butuh bantuan?",
       ctaText: "Hubungi Kami",
@@ -82,11 +184,11 @@ export default function App() {
       ],
       menuLabel: "Services & Legal",
       extendedMenu: [
-        { label: "News" },
-        { label: "Consultation" },
-        { label: "Tutorial" },
-        { label: "Privacy Policy" },
-        { label: "Support" },
+        { label: "News", href: "/news" },
+        { label: "Consultation", href: "/consultation" },
+        { label: "Tutorial", href: "/tutorial" },
+        { label: "Privacy Policy", href: "/privacy-policy" },
+        { label: "Support", href: "/support" },
       ],
       helpText: "Need help?",
       ctaText: "Contact Us",
@@ -141,8 +243,8 @@ export default function App() {
 
   // Fungsi navigasi manual untuk menu items agar ada animasinya
   const handleNavigation = (url: string) => {
-    setNextUrl(url);
-    setIsExiting(true); // Pemicu SharedLoading Normal
+    setNextUrl(url); // Simpan tujuan
+    setIsExiting(true); // Mulai SharedLoading (Normal/Menggambar)
   };
 
   const menuVariants: Variants = {
@@ -150,7 +252,7 @@ export default function App() {
       width: "40px",
       height: "40px",
       borderRadius: "999px",
-      backgroundColor: "rgba(255, 255, 255, 0)",
+      backgroundColor: "rgba(255, 255, 255, 0)", // Transparan saat tertutup
       transition: { type: "spring", stiffness: 400, damping: 30 },
     },
     open: {
@@ -158,7 +260,7 @@ export default function App() {
       height: "auto",
       minHeight: isMobile ? "350px" : "450px",
       borderRadius: "24px",
-      backgroundColor: "rgba(10, 10, 10, 0.98)",
+      backgroundColor: "rgb(255, 255, 255)", // NEGATIF: Putih solid saat terbuka
       transition: { type: "spring", stiffness: 120, damping: 20 },
       transformOrigin: "right top",
     },
@@ -204,21 +306,12 @@ export default function App() {
       <div
         className={`h-screen w-full bg-[#050505] text-white font-sans selection:bg-indigo-500 selection:text-white overflow-hidden relative flex flex-col ${showLoading || isExiting ? "pointer-events-none" : "pointer-events-auto"}`}
       >
-        {/* --- BACKGROUND MESH --- */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{
-              backgroundPosition: ["0% 0%", "50% 50%", "100% 100%", "0% 0%"],
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute inset-0 opacity-20"
-            style={{
-              background:
-                "radial-gradient(at 0% 0%, #6366f1 0px, transparent 80%), radial-gradient(at 100% 0%, #f43f5e 0px, transparent 50%), radial-gradient(at 50% 100%, #06b6d4 0px, transparent 50%)",
-              backgroundSize: "300% 300%",
-              filter: "blur(60px)",
-            }}
-          />
+        {/* --- BACKGROUND --- */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none bg-[#050505]">
+          <LiquidCanvas />
+
+          {/* Vignette Gelap agar teks tajam */}
+          <div className="absolute inset-0 bg-radial-gradient from-transparent via-black/10 to-black/80 opacity-100" />
         </div>
 
         {/* --- NAVBAR --- */}
@@ -235,21 +328,38 @@ export default function App() {
             />
           </div>
           <div className="flex items-center gap-4">
-            {/* Lang Switch */}
+            {/* Lang Switch - Versi Pill yang Bergeser */}
             <div className="absolute left-1/2 -translate-x-1/2 sm:relative sm:left-0 sm:translate-x-0 sm:ml-auto sm:mr-4">
-              <div className="flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 h-8 sm:h-10 backdrop-blur-md transition-all">
+              <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full p-1 h-9 sm:h-10 backdrop-blur-md">
+                {/* Pill Background yang Bergeser */}
+                <motion.div
+                  className="absolute bg-white rounded-full h-[80%] my-auto"
+                  initial={false}
+                  animate={{
+                    x: lang === "in" ? 0 : isMobile ? 32 : 40, // Sesuaikan jarak geser
+                    width: isMobile ? "32px" : "40px",
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+
                 <button
                   onClick={() => changeLanguage("in")}
-                  className={`text-[9px] sm:text-[10px] font-bold tracking-[0.2em] transition-colors cursor-pointer ${lang === "in" ? "text-indigo-400" : "text-neutral-500 hover:text-neutral-300"}`}
+                  className={`relative z-10 w-8 sm:w-10 text-[9px] sm:text-[10px] font-bold tracking-widest transition-colors duration-300 ${
+                    lang === "in"
+                      ? "text-black"
+                      : "text-neutral-500 hover:text-neutral-300"
+                  }`}
                 >
                   ID
                 </button>
-                <span className="mx-1.5 sm:mx-2 text-neutral-800 text-[8px] sm:text-[10px] select-none">
-                  |
-                </span>
+
                 <button
                   onClick={() => changeLanguage("en")}
-                  className={`text-[9px] sm:text-[10px] font-bold tracking-[0.2em] transition-colors cursor-pointer ${lang === "en" ? "text-indigo-400" : "text-neutral-500 hover:text-neutral-300"}`}
+                  className={`relative z-10 w-8 sm:w-10 text-[9px] sm:text-[10px] font-bold tracking-widest transition-colors duration-300 ${
+                    lang === "en"
+                      ? "text-black"
+                      : "text-neutral-500 hover:text-neutral-300"
+                  }`}
                 >
                   EN
                 </button>
@@ -277,6 +387,7 @@ export default function App() {
                         exit={{ opacity: 0 }}
                         className="flex flex-col gap-[3.5px] items-end"
                       >
+                        {/* Saat tertutup: Garis tetap Putih */}
                         <span className="h-[1.5px] w-4 bg-white rounded-full" />
                         <span className="h-[1.5px] w-5 bg-white rounded-full" />
                         <span className="h-[1.5px] w-3 bg-white rounded-full" />
@@ -289,8 +400,9 @@ export default function App() {
                         exit={{ opacity: 0 }}
                         className="relative w-4 h-4 flex items-center justify-center"
                       >
-                        <span className="absolute w-4 h-[1.5px] bg-white rounded-full rotate-45" />
-                        <span className="absolute w-4 h-[1.5px] bg-white rounded-full -rotate-45" />
+                        {/* Saat terbuka: Garis berubah jadi Hitam agar terlihat di BG Putih */}
+                        <span className="absolute w-4 h-[1.5px] bg-black rounded-full rotate-45" />
+                        <span className="absolute w-4 h-[1.5px] bg-black rounded-full -rotate-45" />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -305,14 +417,21 @@ export default function App() {
                       exit={{ opacity: 0 }}
                       className="mt-12 px-8 pb-8 w-full flex flex-col gap-2"
                     >
-                      <div className="text-[9px] tracking-[0.3em] uppercase text-neutral-600 mb-4 px-1">
+                      <div className="text-[9px] tracking-[0.3em] uppercase text-neutral-400 mb-4 px-1">
                         {t.menuLabel}
                       </div>
                       {t.extendedMenu.map((menu, idx) => (
                         <motion.button
                           key={idx}
-                          whileHover={{ x: 5, color: "#6366f1" }}
-                          className="w-full text-left py-4 px-2 border-b border-white/5 text-sm font-semibold text-neutral-400 hover:text-white transition-colors flex justify-between items-center group"
+                          whileHover={{ x: 5, color: "#000000" }}
+                          onClick={() => {
+                            // Tutup menu hamburger
+                            setIsMenuOpen(false);
+                            // Jalankan navigasi dengan transisi
+                            const targetHref = `${menu.href}?lang=${lang}`;
+                            handleNavigation(targetHref);
+                          }}
+                          className="w-full text-left py-4 px-2 border-b border-black/5 text-sm font-semibold text-neutral-600 hover:text-black transition-colors flex justify-between items-center group"
                         >
                           <span>{menu.label}</span>
                           <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px]">
@@ -320,10 +439,19 @@ export default function App() {
                           </span>
                         </motion.button>
                       ))}
-                      <div className="mt-8 p-4 bg-white/5 rounded-2xl border border-white/5 text-center">
-                        <p className="text-[8px] text-neutral-600 leading-relaxed uppercase tracking-widest">
-                          {t.helpText} <br />
-                          <span className="text-indigo-400 font-black">
+
+                      {/* Box Kontak - Latar Hitam, Teks Abu & Hitam */}
+                      <div
+                        onClick={() => {
+                          setIsMenuOpen(false); // Tutup menu agar tidak menghalangi transisi
+                          handleNavigation(`/contact?lang=${lang}`); // Panggil fungsi transisi
+                        }}
+                        className="mt-8 p-4 bg-black rounded-2xl border border-white/10 text-center transition-all duration-300 cursor-pointer hover:scale-[1.02] active:scale-[0.98] group relative z-[120]"
+                      >
+                        <p className="text-[8px] text-neutral-400 leading-relaxed uppercase tracking-widest group-hover:text-neutral-300 transition-colors pointer-events-none">
+                          {t.helpText}
+                          <br />
+                          <span className="text-white font-black text-[10px]">
                             {t.ctaText}
                           </span>
                         </p>
@@ -348,10 +476,8 @@ export default function App() {
               className="max-w-full w-full mx-auto flex flex-col items-center mt-4 sm:-mt-10"
             >
               <div className="relative z-50">
-                <h1 className="text-4xl md:text-7xl lg:text-[5.5rem] font-black leading-tight sm:leading-none px-4 sm:px-12">
-                  <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-rose-400 to-cyan-400 animate-gradient-text">
-                    {t.hero}
-                  </span>
+                <h1 className="text-4xl md:text-7xl lg:text-[5.5rem] font-black leading-tight sm:leading-none text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                  {t.hero}
                 </h1>
               </div>
 
@@ -369,11 +495,6 @@ export default function App() {
                   {t.navItems.map((item, index) => (
                     <motion.div
                       key={`${lang}-${index}`}
-                      whileHover={{
-                        scale: 1.01,
-                        borderColor: "rgba(255, 255, 255, 0.3)",
-                        transition: { duration: 0.3 },
-                      }}
                       onMouseEnter={() => {
                         if (!window.matchMedia("(pointer: coarse)").matches)
                           setHoveredIndex(index);
@@ -387,15 +508,12 @@ export default function App() {
                           typeof window !== "undefined" &&
                           window.matchMedia("(pointer: coarse)").matches;
                         const targetHref = `${item.href.toLowerCase()}?lang=${lang}`;
-
                         if (isTouchDevice) {
-                          if (clickedIndex === index) {
-                            handleNavigation(targetHref); // Gunakan handler animasi
-                          } else {
-                            setClickedIndex(index);
-                          }
+                          if (clickedIndex === index)
+                            handleNavigation(targetHref);
+                          else setClickedIndex(index);
                         } else {
-                          handleNavigation(targetHref); // Gunakan handler animasi
+                          handleNavigation(targetHref);
                         }
                       }}
                       style={{
@@ -403,27 +521,26 @@ export default function App() {
                           hoveredIndex === index || clickedIndex === index
                             ? "140px"
                             : "60px",
-                        backgroundImage:
-                          clickedIndex === index || hoveredIndex === index
-                            ? "linear-gradient(135deg, #6366f1, #f43f5e, #06b6d4, #6366f1)"
-                            : "none",
-                        backgroundColor:
-                          clickedIndex === index || hoveredIndex === index
-                            ? "transparent"
-                            : "rgba(255, 255, 255, 0.02)",
-                        boxShadow:
-                          clickedIndex === index || hoveredIndex === index
-                            ? "0 0 40px rgba(99, 102, 241, 0.3)"
-                            : "none",
-                        backgroundSize: "200% 200%",
                       }}
-                      className={`relative backdrop-blur-3xl border rounded-4xl overflow-hidden cursor-pointer p-4 flex flex-col items-center justify-center transition-all duration-500 ${clickedIndex === index || hoveredIndex === index ? "animate-card-gradient border-white/50 z-30" : "border-white/5 z-20"}`}
+                      className={`relative backdrop-blur-3xl border rounded-4xl overflow-hidden cursor-pointer p-4 flex flex-col items-center justify-center transition-all duration-500 
+      ${
+        clickedIndex === index || hoveredIndex === index
+          ? "bg-white border-white z-30 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+          : "bg-transparent border-white/5 z-20"
+      }`}
                     >
+                      {/* Teks Tombol (Berubah jadi hitam saat hover/negatif) */}
                       <motion.span
-                        className={`relative z-10 font-black tracking-[0.2em] uppercase transition-all duration-300 ${clickedIndex === index ? "text-[12px] text-white" : "text-[9px] text-neutral-500"}`}
+                        className={`relative z-10 font-black tracking-[0.2em] uppercase transition-all duration-500 
+        ${
+          clickedIndex === index || hoveredIndex === index
+            ? "text-[12px] text-black" // NEGATIF: Teks Hitam
+            : "text-[9px] text-neutral-500"
+        }`}
                       >
                         {item.title}
                       </motion.span>
+
                       <AnimatePresence>
                         {(hoveredIndex === index || clickedIndex === index) && (
                           <motion.div
@@ -432,17 +549,18 @@ export default function App() {
                             exit={{ opacity: 0 }}
                             className="relative z-10 w-full flex flex-col items-center mt-2"
                           >
-                            <div
-                              className={`w-10 h-[2px] mb-3 rounded-full ${clickedIndex === index ? "bg-white" : "bg-white/40"}`}
-                            />
-                            <p className="text-white font-bold text-[9px] leading-relaxed text-center px-2">
+                            {/* Garis pemisah jadi hitam agar kontras di atas BG putih */}
+                            <div className="w-10 h-[2px] mb-3 rounded-full bg-black/20" />
+
+                            <p className="text-black font-bold text-[9px] leading-relaxed text-center px-2">
                               {item.description}
                             </p>
+
                             {clickedIndex === index && (
                               <motion.span
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="mt-2 text-[7px] text-indigo-300 tracking-widest uppercase animate-pulse sm:hidden"
+                                className="mt-2 text-[7px] text-neutral-500 tracking-widest uppercase animate-pulse sm:hidden"
                               >
                                 {t.confirmTap}
                               </motion.span>

@@ -154,6 +154,7 @@ const content: Record<string, any> = {
 const Section = ({
   data,
   index,
+  lang,
 }: {
   data: any;
   index: number;
@@ -194,27 +195,39 @@ const Section = ({
       ref={ref}
       className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden bg-transparent`}
     >
-      <div className="sticky top-0 h-screen w-full flex items-center justify-center">
-        <motion.div
-          style={{ x, opacity, scale, filter, skewY: skew }}
-          className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center"
-        >
-          <div
-            className={`md:col-span-8 ${!isLeft ? "md:col-start-5 text-right" : "text-left"}`}
+      <div
+        className={`md:col-span-8 ${!isLeft ? "md:col-start-5 text-right" : "text-left"}`}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={data.id + lang} // Key unik gabungan ID dan bahasa agar animasi terpicu
+            initial={{ opacity: 0, x: isLeft ? -20 : 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: isLeft ? 20 : -20 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <motion.span
-              className={`text-xs md:text-sm font-bold tracking-[0.5em] uppercase mb-4 block ${data.theme}`}
+            <motion.div
+              style={{ x, opacity, scale, filter, skewY: skew }}
+              className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center"
             >
-              {data.id} / {data.title}
-            </motion.span>
-            <h2 className="text-5xl md:text-8xl font-black uppercase leading-[0.9] tracking-tighter mb-6 whitespace-pre-line">
-              {data.headline}
-            </h2>
-            <p className="text-base md:text-lg text-zinc-400 max-w-md leading-relaxed font-medium">
-              {data.body}
-            </p>
-          </div>
-        </motion.div>
+              <div
+                className={`md:col-span-8 ${!isLeft ? "md:col-start-5 text-right" : "text-left"}`}
+              >
+                <motion.span
+                  className={`text-xs md:text-sm font-bold tracking-[0.5em] uppercase mb-4 block ${data.theme}`}
+                >
+                  {data.id} / {data.title}
+                </motion.span>
+                <h2 className="text-5xl md:text-8xl font-black uppercase leading-[0.9] tracking-tighter mb-6 whitespace-pre-line">
+                  {data.headline}
+                </h2>
+                <p className="text-base md:text-lg text-zinc-400 max-w-md leading-relaxed font-medium">
+                  {data.body}
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );
@@ -228,6 +241,12 @@ export default function App() {
   const { scrollYProgress } = useScroll(); // Pindahkan ke atas agar bisa dibaca useEffect
   const [isExiting, setIsExiting] = useState(false);
   const router = useRouter();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const footerY = useTransform(scrollYProgress, [0.9, 1], ["-50%", "0%"]);
+  const footerOpacity = useTransform(scrollYProgress, [0.9, 1], [0, 1]);
+  const finY = useTransform(scrollYProgress, [0.9, 1], [100, 0]);
+  const finScale = useTransform(scrollYProgress, [0.9, 1], [0.8, 1]);
+  const lineScale = useTransform(scrollYProgress, [0.95, 1], [0, 1]);
 
   useEffect(() => {
     setMounted(true);
@@ -282,9 +301,6 @@ export default function App() {
     };
   }, [scrollYProgress, starsY]); // Masukkan dependency agar tidak error
 
-  // Spring untuk progress bar
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-
   if (!mounted) return <div className="bg-black min-h-screen" />;
 
   const handleLangChange = (newLang: keyof typeof content) => {
@@ -294,23 +310,8 @@ export default function App() {
 
   return (
     <div className="bg-transparent text-zinc-100 font-sans selection:bg-amber-500">
-      <AnimatePresence mode="wait">
-        {isExiting && (
-          <motion.div
-            key="loader"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "-100%" }}
-            transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-            className="fixed inset-0 bg-zinc-950 z-[999]"
-          >
-            <SharedLoading
-              onComplete={() => {
-                /* optional callback */
-              }}
-            />
-          </motion.div>
-        )}
+      <AnimatePresence>
+        {isExiting && <SharedLoading onComplete={() => router.push("/home")} />}
       </AnimatePresence>
 
       <style
@@ -392,6 +393,18 @@ export default function App() {
   filter: blur(60px); /* Kurangi sedikit blur agar tidak terlalu menyebar ke atas */
   pointer-events: none;
 }
+  .footer-container {
+  clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+.footer-content {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh; /* Sesuaikan dengan tinggi footer kamu */
+  z-index: -1;
+}
       `,
         }}
       />
@@ -439,28 +452,33 @@ export default function App() {
       </div>
       {/* Hero Section dengan Grain Effect */}
       <section className="relative h-screen snap-section flex flex-col justify-center items-center bg-zinc-950 overflow-hidden">
-        {/* Latar Belakang Grain */}
-        <motion.div
-          className="absolute inset-0 z-0 opacity-100"
-          style={{ filter: "url(#grainy-noise)", opacity: noiseIntensity }} // Terapkan filter dan opacity berdenyut
-          transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {/* 1. Latar Belakang Grain & Stars (DI LUAR AnimatePresence agar tidak ikut terpotong/bergeser) */}
+        <div className="absolute inset-0 z-0">
+          <motion.div
+            className="absolute inset-0 opacity-100"
+            style={{ filter: "url(#grainy-noise)", opacity: noiseIntensity }}
+          />
+          <div className="absolute inset-0 stars-container opacity-30" />
+        </div>
 
-        <div className="absolute inset-0 z-0 stars-container opacity-30" />
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="text-center px-4 relative z-10"
-        >
-          {" "}
-          {/* Pastikan teks di atas grain */}
-          <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter">
-            Budapes <br />
-            <span className="stroke-text text-transparent italic">Echoes</span>
-          </h1>
-        </motion.div>
+        {/* 2. Konten Teks (DI DALAM AnimatePresence untuk animasi bahasa) */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={lang}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.8 }}
+            className="text-center px-4 relative z-10 pointer-events-none"
+          >
+            <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter">
+              Budapes <br />
+              <span className="stroke-text text-transparent italic">
+                {lang === "id" ? "Gema" : "Echoes"}
+              </span>
+            </h1>
+          </motion.div>
+        </AnimatePresence>
       </section>
       {/* Sections */}
       <div className="relative">
@@ -474,53 +492,91 @@ export default function App() {
         ))}
       </div>
       {/* Footer FIN (Versi Lama yang diperkecil untuk Mobile) */}
-      <section className="min-h-screen flex flex-col justify-center items-center bg-zinc-100 text-black p-6 text-center relative overflow-hidden snap-section">
-        <div className="absolute inset-0 opacity-[0.05] pointer-events-none select-none">
-          <h1 className="text-[60vw] md:text-[35vw] font-black leading-none -translate-x-1/4 translate-y-1/4 text-zinc-400">
-            FIN
-          </h1>
-        </div>
-        <div className="relative z-10 w-full max-w-5xl">
+      <section className="relative h-screen snap-section overflow-hidden no-grain bg-zinc-100">
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex flex-col items-center"
+            key={lang}
+            style={{
+              y: footerY,
+              opacity: footerOpacity,
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="h-full w-full flex flex-col justify-center items-center text-black p-6 text-center"
           >
-            <h2 className="text-4xl md:text-9xl font-black uppercase leading-[0.9] tracking-tight mb-6 mix-blend-difference">
-              {lang === "id" ? "Inilah Budapes," : "This is Budapes,"}
-            </h2>
-            <p className="text-lg md:text-3xl font-serif leading-relaxed text-zinc-600 italic max-w-xl mb-12 px-4">
-              {lang === "id"
-                ? '"mahakarya nyata dari tangan sang ahli."'
-                : '"a true masterpiece from the hands of an expert."'}
-            </p>
-            <div
-              onClick={() => {
-                setIsExiting(true);
-                setTimeout(() => {
-                  router.push("/home");
-                }, 4000); // Naikkan durasi agar animasi GSAP sempat selesai
-              }}
+            {/* Tulisan Raksasa FIN */}
+            <motion.div
+              style={{ y: finY, scale: finScale }}
+              className="absolute inset-0 opacity-[0.05] pointer-events-none select-none flex items-center justify-center"
             >
+              <h1 className="text-[60vw] md:text-[35vw] font-black leading-none text-zinc-400">
+                FIN
+              </h1>
+            </motion.div>
+
+            <div className="relative z-10 w-full max-w-5xl">
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="group flex flex-col items-center gap-4 cursor-pointer"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false }}
+                className="flex flex-col items-center"
               >
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-black flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
-                  <MoveRight
-                    size={28}
-                    className="group-hover:translate-x-1 transition-transform"
-                  />
+                <h2 className="text-4xl md:text-9xl font-black uppercase leading-[0.9] tracking-tight mb-6 mix-blend-difference">
+                  {lang === "id" ? "Inilah Budapes," : "This is Budapes,"}
+                </h2>
+
+                <motion.div
+                  style={{ scaleX: lineScale }}
+                  className="w-full max-w-2xl h-[4px] bg-black/100 mb-12 origin-center"
+                />
+
+                <p className="text-lg md:text-3xl font-serif leading-relaxed text-zinc-600 italic max-w-xl mb-12 px-4">
+                  {lang === "id"
+                    ? '"mahakarya nyata dari tangan sang ahli."'
+                    : '"a true masterpiece from the hands of an expert."'}
+                </p>
+
+                <div
+                  onClick={() => {
+                    setIsExiting(true);
+                    setTimeout(() => router.push("/home"), 4000);
+                  }}
+                  className="mt-8"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="group flex flex-col items-center gap-4 cursor-pointer"
+                  >
+                    {/* Lingkaran Logo - Pastikan rounded-full dan overflow-hidden */}
+                    <motion.div
+                      whileTap={{
+                        backgroundColor: "#000000",
+                        color: "#ffffff",
+                        scale: 0.9,
+                      }}
+                      className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-black flex items-center justify-center 
+                 bg-transparent text-black
+                 group-hover:bg-black group-hover:text-white 
+                 transition-all duration-300 ease-out"
+                    >
+                      <MoveRight
+                        size={28}
+                        className="group-hover:translate-x-1 transition-transform"
+                      />
+                    </motion.div>
+
+                    {/* Teks Deskripsi Tombol */}
+                    <span className="uppercase tracking-[0.4em] text-[10px] font-black text-black">
+                      {lang === "id" ? "Ke Beranda" : "Go Home"}
+                    </span>
+                  </motion.div>
                 </div>
-                <span className="uppercase tracking-[0.4em] text-[10px] font-black">
-                  {lang === "id" ? "Ke Beranda" : "Go Home"}
-                </span>
               </motion.div>
             </div>
           </motion.div>
-        </div>
+        </AnimatePresence>
       </section>
     </div>
   );

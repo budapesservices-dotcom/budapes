@@ -8,8 +8,8 @@ type Props = {
 };
 
 export default function SharedLoading({ reverse = false, onComplete }: Props) {
-  const containerRef = useRef(null);
-  const copyrightSymbolRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const copyrightSymbolRef = useRef<SVGTSpanElement | null>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -34,68 +34,64 @@ export default function SharedLoading({ reverse = false, onComplete }: Props) {
       };
 
       if (reverse) {
-        // --- MODE REVERSE (Menghapus) ---
-        // Mulai dengan kondisi normal (baseFrequency 0)
-        gsap.set("#liquid-filter feTurbulence", {
-          attr: { baseFrequency: "0.00" },
-        });
-        gsap.set(".word-path", { strokeDasharray: 1000, strokeDashoffset: 0 });
-
+        // --- MODE REVERSE (Membuka Halaman Baru) ---
         tl.to(copyrightSymbolRef.current, {
-          y: 10,
-          duration: 0.1,
+          attr: { dy: -150 },
+          opacity: 0,
+          duration: 0.6,
+          ease: "back.in(1.7)",
+          onStart: () => playWaveAndSmoothStop(1.2),
         })
-          .to(copyrightSymbolRef.current, {
-            y: -100,
-            opacity: 0,
-            duration: 0.6,
-            ease: "back.in(1.7)",
-            // Mulai gelombang tepat saat tulisan akan dihapus
-            onStart: () => playWaveAndSmoothStop(1.2),
-          })
           .to(
             ".word-path",
             {
               strokeDashoffset: 1000,
-              duration: 1.5,
+              duration: 1.2,
               stagger: { each: 0.1, from: "end" },
               ease: "power2.in",
             },
             "-=0.3",
           )
+          // AKHIR: Tarik seluruh tirai hitam ke ATAS layar
           .to(containerRef.current, {
-            opacity: 0,
-            duration: 0.5,
+            y: "100%",
+            duration: 0.8,
+            ease: "power4.inOut",
             onComplete: () => onComplete?.(),
           });
       } else {
-        // --- MODE NORMAL (Menggambar) ---
-        gsap.set(".word-path", {
-          strokeDasharray: 1000,
-          strokeDashoffset: 1000,
-        });
-        gsap.set(copyrightSymbolRef.current, { y: -150, opacity: 0 });
-        // Pastikan mulai dari kondisi tenang
-        gsap.set("#liquid-filter feTurbulence", {
-          attr: { baseFrequency: "0.00" },
+        // --- MODE NORMAL (Menutup Halaman Lama) ---
+        // 1. Taruh tirai di bawah layar (y: 100%)
+        gsap.set(containerRef.current, { y: "100%" });
+        gsap.set(copyrightSymbolRef.current, {
+          attr: { dy: -150 },
+          opacity: 0,
         });
 
-        tl.to(".word-path", {
-          strokeDashoffset: 0,
-          duration: 2,
-          stagger: 0.1,
-          ease: "power2.inOut",
-          onStart: () => playWaveAndSmoothStop(1.8), // Jalankan gejolak lalu tenang
-        }).to(
-          copyrightSymbolRef.current,
-          {
-            opacity: 1,
-            y: 0,
-            duration: 1.2,
-            ease: "bounce.out",
-          },
-          "-=0.2",
-        );
+        // 2. Tarik tirai naik ke atas menutupi layar
+        tl.to(containerRef.current, {
+          y: "0%",
+          duration: 0.8,
+          ease: "power4.inOut", // Gantian dari [0.76, 0, 0.24, 1]
+        })
+          // 3. Baru mulai gambar teks BUDAPES
+          .to(".word-path", {
+            strokeDashoffset: 0,
+            duration: 1.5,
+            stagger: 0.1,
+            ease: "power2.inOut",
+            onStart: () => playWaveAndSmoothStop(1.8),
+          })
+          .to(
+            copyrightSymbolRef.current,
+            {
+              attr: { dy: -20 }, // Jatuh ke posisi ideal (-20 adalah posisi tengah yang diinginkan)
+              opacity: 1,
+              duration: 1.2,
+              ease: "bounce.out", // Animasi bounce sekarang akan terlihat
+            },
+            "-=0.2",
+          );
       }
     }, containerRef);
 
@@ -105,52 +101,65 @@ export default function SharedLoading({ reverse = false, onComplete }: Props) {
   return (
     <motion.div
       ref={containerRef}
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-[#050505] flex items-center justify-center"
+      className="fixed inset-0 z-[1000] bg-[#050505] flex items-center justify-center overflow-hidden"
     >
-      {/* Kontainer relatif untuk membungkus SVG dan Copyright secara horizontal */}
-      <div className="relative flex items-center">
-        <svg
-          viewBox="0 0 600 120"
-          className="w-[300px] md:w-[600px]" // Menggunakan ukuran px agar lebih stabil
-          style={{ filter: "url(#liquid-filter)" }}
-        >
-          <defs>
-            <filter id="liquid-filter">
-              <feTurbulence
-                type="fractalNoise"
-                baseFrequency="0.05"
-                numOctaves="1" // <--- WAJIB: Ubah dari 2 menjadi 1
-                result="noise"
-                seed="2"
-              />
-              <feDisplacementMap
-                in="SourceGraphic"
-                in2="noise"
-                scale="20"
-                xChannelSelector="R"
-                yChannelSelector="G"
-              />
-            </filter>
-          </defs>
-          <text
-            x="50%"
-            y="75%" // Sedikit diturunkan agar sejajar tengah secara visual
-            textAnchor="middle"
-            className="word-path fill-none stroke-white font-black italic text-7xl md:text-8xl tracking-widest"
-            style={{ strokeWidth: 1, strokeLinecap: "round" }}
+      {/* Kontainer Utama dengan Flex-Col untuk Mobile, Flex-Row untuk Desktop */}
+      <div className="relative flex flex-col md:flex-row items-center justify-center w-full">
+        {/* SVG Container */}
+        <div className="relative flex items-center justify-center w-full">
+          <svg
+            viewBox="0 0 600 120"
+            className="w-[280px] sm:w-[400px] md:w-[600px] h-auto"
+            style={{
+              filter: "url(#liquid-filter)",
+              overflow: "visible", // Tambahkan ini agar animasi dy tidak terpotong
+            }}
           >
-            BUDAPES
-          </text>
-        </svg>
+            <defs>
+              <filter
+                id="liquid-filter"
+                x="-20%"
+                y="-20%"
+                width="140%"
+                height="200%" // Dibuat lebih tinggi agar saat turun tidak terpotong
+              >
+                <feTurbulence
+                  type="fractalNoise"
+                  baseFrequency="0.00"
+                  numOctaves="1"
+                  result="noise"
+                  seed="2"
+                />
+                <feDisplacementMap
+                  in="SourceGraphic"
+                  in2="noise"
+                  scale="20"
+                  xChannelSelector="R"
+                  yChannelSelector="G"
+                />
+              </filter>
+            </defs>
 
-        {/* COPYRIGHT di samping kanan */}
-        <div
-          ref={copyrightSymbolRef}
-          className="text-2xl md:text-4xl text-amber-500 font-bold -ml-12 md:-ml-8 self-center"
-        >
-          ©
+            <text
+              x="50%"
+              y="50%"
+              dominantBaseline="central"
+              textAnchor="middle"
+              className="word-path fill-none stroke-white font-black italic text-6xl sm:text-7xl md:text-8xl tracking-widest"
+              style={{ strokeWidth: 1, strokeLinecap: "round" }}
+            >
+              BUDAPES
+              {/* Logo Copyright sebagai bagian dari teks agar jaraknya konsisten */}
+              <tspan
+                ref={copyrightSymbolRef}
+                dy="0" // Set awal ke 0 agar tidak terdorong sejak awal
+                dx="10"
+                className="fill-amber-500 stroke-none font-bold text-3xl md:text-5xl not-italic"
+              >
+                ©
+              </tspan>
+            </text>
+          </svg>
         </div>
       </div>
     </motion.div>
