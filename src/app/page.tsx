@@ -234,7 +234,7 @@ const Section = ({
 };
 
 export default function App() {
-  const [lang, setLang] = useState<keyof typeof content>("id");
+  const [lang, setLang] = useState<"id" | "en">("id");
   const [mounted, setMounted] = useState(false);
   const [noiseIntensity, setNoiseIntensity] = useState(0.05);
   const starsY = useMotionValue(0);
@@ -303,7 +303,7 @@ export default function App() {
 
   if (!mounted) return <div className="bg-black min-h-screen" />;
 
-  const handleLangChange = (newLang: keyof typeof content) => {
+  const handleLangChange = (newLang: "id" | "en") => {
     setLang(newLang);
     localStorage.setItem("user-lang", newLang);
   };
@@ -439,16 +439,45 @@ export default function App() {
         style={{ scaleX }}
       />
       {/* Language Switch */}
-      <div className="fixed top-6 right-6 z-[100] flex gap-2">
-        {["id", "en"].map((l) => (
+      <div className="fixed top-8 right-8 z-[120] flex items-center gap-4">
+        <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full p-1 h-10 backdrop-blur-md">
+          {/* Slider Latar Belakang Putih */}
+          <motion.div
+            className="absolute bg-white rounded-full h-[80%] my-auto"
+            initial={false}
+            animate={{
+              // Sesuaikan posisi x agar pas di tengah tombol
+              x: lang === "id" ? 0 : 40,
+            }}
+            style={{ width: "40px" }}
+            transition={{
+              type: "spring",
+              stiffness: 400, // Lebih tinggi agar gerakan lebih cepat/bertenaga
+              damping: 15, // Lebih rendah agar ada efek "bounce" atau membal di akhir
+              mass: 0.8, // Membuat slider terasa lebih ringan saat membal
+            }}
+          />
+
+          {/* Tombol ID */}
           <button
-            key={l}
-            onClick={() => handleLangChange(l as keyof typeof content)}
-            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${lang === l ? "bg-white text-black border-white" : "text-zinc-500 border-white/10 backdrop-blur-md"}`}
+            onClick={() => setLang("id")}
+            className={`relative z-10 w-10 text-[9px] font-black transition-colors duration-300 ${
+              lang === "id" ? "text-black" : "text-white/50"
+            }`}
           >
-            {l}
+            ID
           </button>
-        ))}
+
+          {/* Tombol EN */}
+          <button
+            onClick={() => setLang("en")}
+            className={`relative z-10 w-10 text-[9px] font-black transition-colors duration-300 ${
+              lang === "en" ? "text-black" : "text-white/50"
+            }`}
+          >
+            EN
+          </button>
+        </div>
       </div>
       {/* Hero Section dengan Grain Effect */}
       <section className="relative h-screen snap-section flex flex-col justify-center items-center bg-zinc-950 overflow-hidden">

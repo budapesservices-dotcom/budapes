@@ -11,6 +11,7 @@ import {
 } from "framer-motion";
 import { MoveRight, ArrowLeft } from "lucide-react"; // Pastikan install lucide-react
 import SharedLoading from "@/lib/SharedLoading"; // Sesuaikan path jika perlu
+import styles from "./not-found.module.css";
 
 const content = {
   id: {
@@ -65,19 +66,30 @@ export default function NotFound() {
   const [targetUrl, setTargetUrl] = useState("");
   const [lang, setLang] = useState<"id" | "en">("id");
   const [mounted, setMounted] = useState(false);
+  const toggleLanguage = (newLang: "id" | "en") => {
+    setLang(newLang);
+  };
 
   // Parallax Mouse Effect untuk angka 404
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const springConfig = { damping: 40, stiffness: 100 };
-  const rotateX = useSpring(
-    useTransform(y, [-300, 300], [5, -5]),
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const springConfig = { damping: 25, stiffness: 150 };
+
+  // Transform pergerakan mouse menjadi pergerakan angka (range -15px sampai 15px)
+  const dx = useSpring(
+    useTransform(mouseX, [0, 1920], [-15, 15]),
     springConfig,
   );
-  const rotateY = useSpring(
-    useTransform(x, [-300, 300], [-5, 5]),
+  const dy = useSpring(
+    useTransform(mouseY, [0, 1080], [-15, 15]),
     springConfig,
   );
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    mouseX.set(e.clientX);
+    mouseY.set(e.clientY);
+  };
 
   const t = content[lang];
 
@@ -98,14 +110,6 @@ export default function NotFound() {
     setLang(newLang);
     localStorage.setItem("user-lang", newLang);
   };
-
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set(event.clientX - centerX);
-    y.set(event.clientY - centerY);
-  }
 
   if (!mounted) return <div className="bg-zinc-950 min-h-screen" />;
 
@@ -190,20 +194,45 @@ export default function NotFound() {
         </div>
 
         {/* LANGUAGE SWITCHER (Pojok Kanan Atas - Style Minimalis) */}
-        <div className="absolute top-8 right-8 z-50 flex gap-2 mix-blend-difference">
-          {["id", "en"].map((l) => (
+        <div className="fixed top-8 right-8 z-[120] flex items-center gap-4">
+          <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full p-1 h-10 backdrop-blur-md">
+            {/* Slider Latar Belakang Putih */}
+            <motion.div
+              className="absolute bg-white rounded-full h-[80%] my-auto"
+              initial={false}
+              animate={{
+                // Sesuaikan posisi x agar pas di tengah tombol
+                x: lang === "id" ? 0 : 40,
+              }}
+              style={{ width: "40px" }}
+              transition={{
+                type: "spring",
+                stiffness: 400, // Lebih tinggi agar gerakan lebih cepat/bertenaga
+                damping: 15, // Lebih rendah agar ada efek "bounce" atau membal di akhir
+                mass: 0.8, // Membuat slider terasa lebih ringan saat membal
+              }}
+            />
+
+            {/* Tombol ID */}
             <button
-              key={l}
-              onClick={() => handleLangChange(l as "id" | "en")}
-              className={`px-3 py-1 text-[10px] font-bold uppercase border transition-all duration-300 rounded-full ${
-                lang === l
-                  ? "bg-zinc-100 text-black border-zinc-100"
-                  : "text-zinc-500 border-zinc-800 hover:border-zinc-600 backdrop-blur-md"
+              onClick={() => setLang("id")}
+              className={`relative z-10 w-10 text-[9px] font-black transition-colors duration-300 ${
+                lang === "id" ? "text-black" : "text-white/50"
               }`}
             >
-              {l === "id" ? "ID" : "EN"}
+              ID
             </button>
-          ))}
+
+            {/* Tombol EN */}
+            <button
+              onClick={() => setLang("en")}
+              className={`relative z-10 w-10 text-[9px] font-black transition-colors duration-300 ${
+                lang === "en" ? "text-black" : "text-white/50"
+              }`}
+            >
+              EN
+            </button>
+          </div>
         </div>
 
         {/* KONTEN UTAMA */}
@@ -211,30 +240,11 @@ export default function NotFound() {
           {/* BAGIAN KIRI: VISUAL 404 (Parallax Stroke Text) */}
           <div className="md:col-span-7 flex flex-col justify-center items-center md:items-start relative h-[40vh] md:h-auto">
             <motion.div
-              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-              className="relative"
+              onMouseMove={handleMouseMove}
+              style={{ x: dx, y: dy }}
+              className={styles.glitchContainer}
             >
-              {/* Layer Utama (Stroke) */}
-              <motion.h1
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                className="text-[8rem] md:text-[16rem] font-black leading-none tracking-tighter stroke-text select-none opacity-50"
-              >
-                404
-              </motion.h1>
-
-              {/* Layer Glow/Blur di belakang */}
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5, duration: 1 }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white mix-blend-overlay blur-sm pointer-events-none"
-              >
-                <h1 className="text-[8rem] md:text-[16rem] font-black leading-none tracking-tighter opacity-10">
-                  404
-                </h1>
-              </motion.div>
+              <h1 className={styles.glitchText}>404</h1>
             </motion.div>
           </div>
 
@@ -262,9 +272,14 @@ export default function NotFound() {
                 </h2>
 
                 {/* Deskripsi (Serif Italic) */}
-                <p className="font-serif italic text-lg md:text-xl text-zinc-400 leading-relaxed mb-12 max-w-md mx-auto md:mx-0 border-l border-zinc-800 pl-0 md:pl-6">
-                  "{t.desc}"
-                </p>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="font-serif italic text-lg md:text-xl text-zinc-400 leading-relaxed max-w-md mx-auto mb-4" // Tambahkan max-w-md dan kurangi mb
+                >
+                  {t.desc}
+                </motion.p>
 
                 {/* TOMBOL NAVIGASI (Gaya Footer Welcome Page) */}
                 <div className="flex flex-col gap-6 items-center md:items-start">
@@ -296,11 +311,11 @@ export default function NotFound() {
                   <motion.button
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.5 }}
-                    whileHover={{ opacity: 1, x: -5 }}
-                    onClick={() => handleNavigation("/.")}
-                    className="flex items-center gap-3 text-[10px] tracking-[0.2em] uppercase text-zinc-500 hover:text-amber-500 transition-colors mt-4"
+                    whileHover={{ opacity: 1, y: -2 }}
+                    onClick={() => handleNavigation("/welcome")}
+                    className="flex items-center gap-2 text-[9px] tracking-[0.2em] uppercase text-zinc-500 hover:text-amber-500 transition-all mt-2"
                   >
-                    <ArrowLeft size={14} />
+                    <ArrowLeft size={12} />
                     {t.welcome}
                   </motion.button>
                 </div>

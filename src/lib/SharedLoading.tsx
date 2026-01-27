@@ -4,16 +4,22 @@ import { gsap } from "gsap";
 
 type Props = {
   reverse?: boolean;
+  isEntry?: boolean;
   onComplete?: () => void;
 };
 
-export default function SharedLoading({ reverse = false, onComplete }: Props) {
+export default function SharedLoading({
+  reverse = false,
+  isEntry = false,
+  onComplete,
+}: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const copyrightSymbolRef = useRef<SVGTSpanElement | null>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
+      const shouldOpen = reverse || isEntry;
 
       // Fungsi untuk memicu gelombang dan menghentikannya secara halus
       const playWaveAndSmoothStop = (dur: number) => {
@@ -33,7 +39,7 @@ export default function SharedLoading({ reverse = false, onComplete }: Props) {
         });
       };
 
-      if (reverse) {
+      if (shouldOpen) {
         // --- MODE REVERSE (Membuka Halaman Baru) ---
         tl.to(copyrightSymbolRef.current, {
           attr: { dy: -150 },
@@ -73,6 +79,7 @@ export default function SharedLoading({ reverse = false, onComplete }: Props) {
           y: "0%",
           duration: 0.8,
           ease: "power4.inOut", // Gantian dari [0.76, 0, 0.24, 1]
+          onComplete: () => onComplete?.(),
         })
           // 3. Baru mulai gambar teks BUDAPES
           .to(".word-path", {
@@ -96,7 +103,7 @@ export default function SharedLoading({ reverse = false, onComplete }: Props) {
     }, containerRef);
 
     return () => ctx.revert();
-  }, [reverse, onComplete]);
+  }, [reverse, isEntry, onComplete]);
 
   return (
     <motion.div
