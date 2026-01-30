@@ -120,39 +120,67 @@ const animText: Record<string, any> = {
 
 // --- 2. SUB-COMPONENTS ---
 const Navbar = ({ lang, onToggle, onBack, isMobile, navRef }: any) => {
-  // Kita simpan perhitungan warna dalam variabel agar kode bersih
-  // Saat --nav-theme 0 (Putih), saat 1 (Hitam)
   const dynamicColor =
     "rgb(calc(255 * (1 - var(--nav-theme))), calc(255 * (1 - var(--nav-theme))), calc(255 * (1 - var(--nav-theme))))";
 
   return (
     <nav
       ref={navRef}
-      style={{ "--nav-theme": "0" } as any}
-      className="fixed top-0 left-0 w-full p-8 z-[100] flex justify-between items-start pointer-events-none"
+      style={
+        { "--nav-theme": "0", "--back-move": "0px", "--logo-op": "0" } as any
+      }
+      className="fixed top-0 left-0 w-full p-8 z-[100] flex justify-between items-center pointer-events-none"
     >
-      <div className="pointer-events-auto">
-        <button
-          onClick={onBack}
-          style={{ color: dynamicColor } as any}
-          className="flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase transition-all"
+      {/* SISI KIRI: Area Logo & Tombol Kembali */}
+      <div className="relative flex items-center h-9 sm:h-10">
+        {/* LOGO BUDAPES ©: absolute agar tidak mendorong tombol back di awal */}
+        <div
+          className="logo-budapes absolute left-0 flex items-center gap-1 transition-opacity duration-300 shrink-0 pointer-events-none"
+          style={
+            {
+              opacity: "var(--logo-op)",
+              color: "black",
+              height: "100%", // Mengikuti tinggi parent (h-9/h-10)
+            } as any
+          }
         >
-          <ArrowLeft size={14} /> {lang === "in" ? "Kembali" : "Back"}
-        </button>
+          <span className="text-[20px] font-black tracking-[0.2em] uppercase">
+            Budapes
+          </span>
+          <span className="text-[14px] font-bold">©</span>
+        </div>
+
+        {/* Tombol Kembali: Relative agar berada di pojok kiri saat logo 'gaib' */}
+        <div
+          className="pointer-events-auto back-btn-container transition-transform duration-75 ease-out flex items-center"
+          style={{ transform: "translateX(var(--back-move))" } as any}
+        >
+          <button
+            onClick={onBack}
+            style={{ color: dynamicColor } as any}
+            className="flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase transition-all"
+          >
+            <ArrowLeft size={14} /> {lang === "in" ? "Kembali" : "Back"}
+          </button>
+        </div>
       </div>
 
-      <div className="pointer-events-auto">
+      {/* SISI KANAN: Toggle Bahasa */}
+      <div className="pointer-events-auto toggle-wrapper">
         <div
           style={
             {
               backgroundColor:
                 "rgba(255, 255, 255, calc(0.05 * (1 - var(--nav-theme))))",
+              // UBAH BAGIAN INI:
+              // Kita gunakan calc untuk RGB agar berubah dari 255 (putih) ke 0 (hitam)
               borderColor:
-                "rgba(255, 255, 255, calc(0.1 + (0.1 * var(--nav-theme))))",
+                "rgba(calc(255 * (1 - var(--nav-theme))), calc(255 * (1 - var(--nav-theme))), calc(255 * (1 - var(--nav-theme))), 0.2)",
             } as any
           }
           className="relative flex items-center border rounded-full p-1 h-9 sm:h-10 backdrop-blur-md transition-colors"
         >
+          {/* ... isi toggle (motion.div dan button ID/EN) tetap sama seperti kode Anda ... */}
           <motion.div
             style={{ backgroundColor: dynamicColor } as any}
             className="absolute rounded-full h-[80%] my-auto"
@@ -167,23 +195,23 @@ const Navbar = ({ lang, onToggle, onBack, isMobile, navRef }: any) => {
               mass: 0.8,
             }}
           />
-
           <button
             onClick={() => onToggle("in")}
             className={`relative z-10 w-8 sm:w-10 text-[9px] font-bold transition-colors duration-300 ${
-              lang === "in" ? "active-txt-theme" : "inactive-txt-theme"
+              lang === "in"
+                ? "active-txt-theme text-black"
+                : "inactive-txt-theme text-neutral-500"
             }`}
-            style={{ color: lang === "in" ? "black" : "rgba(255,255,255,0.5)" }}
           >
             ID
           </button>
-
           <button
             onClick={() => onToggle("en")}
             className={`relative z-10 w-8 sm:w-10 text-[9px] font-bold transition-colors duration-300 ${
-              lang === "en" ? "active-txt-theme" : "inactive-txt-theme"
+              lang === "en"
+                ? "active-txt-theme text-black"
+                : "inactive-txt-theme text-neutral-500"
             }`}
-            style={{ color: lang === "en" ? "black" : "rgba(255,255,255,0.5)" }}
           >
             EN
           </button>
@@ -192,7 +220,46 @@ const Navbar = ({ lang, onToggle, onBack, isMobile, navRef }: any) => {
     </nav>
   );
 };
+
 function DiscographyContent() {
+  const smoothVelocity = useRef(0);
+  const isRectReady = useRef(false);
+  const currentX = useRef(0);
+  const horizontalContainerRef = useRef<HTMLDivElement>(null);
+  const [showSymbol, setShowSymbol] = useState(false);
+  const showSymbolRef = useRef(false);
+  const [showCenterRect, setShowCenterRect] = useState(false);
+  useEffect(() => {
+    if (showSymbol) {
+      const menuTimer = setTimeout(() => setIsMenuOpen(true), 1500);
+      // Pemicu Persegi Panjang: Muncul 1 detik setelah menu mulai terbuka
+      const rectTimer = setTimeout(() => setShowCenterRect(true), 2500);
+
+      return () => {
+        clearTimeout(menuTimer);
+        clearTimeout(rectTimer);
+      };
+    } else {
+      setIsMenuOpen(false);
+      setShowCenterRect(false);
+    }
+  }, [showSymbol]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuItems = {
+    in: ["Portofolio", "Tentang Kami", "Dukungan", "Hubungi Kami"],
+    en: ["Portfolio", "About Us", "Support", "Contact Us"],
+  };
+
+  useEffect(() => {
+    if (showSymbol) {
+      // Menunggu animasi (+) -> (|) selesai sebelum membuka menu
+      const timer = setTimeout(() => setIsMenuOpen(true), 1500);
+      return () => clearTimeout(timer);
+    } else {
+      setIsMenuOpen(false);
+    }
+  }, [showSymbol]);
+
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const router = useRouter();
   // 1. Inisialisasi State Bahasa & Mobile
@@ -277,34 +344,33 @@ function DiscographyContent() {
       lenis.raf(time);
       const windowH = window.innerHeight;
 
-      // --- PARALLAX MANAGER ---
+      // --- PARALLAX MANAGER (KEMBALIKAN KODE INI) ---
       if (parallaxElementsRef.current) {
-        parallaxElementsRef.current.forEach((el: any) => {
-          if (!el || !document.body.contains(el)) return;
+        parallaxElementsRef.current.forEach((el) => {
+          // Ambil kecepatan dari atribut data-parallax-speed
           const speed = parseFloat(
             el.getAttribute("data-parallax-speed") || "0",
           );
+          const direction = el.getAttribute("data-parallax-direction") || "y";
+
           const rect = el.getBoundingClientRect();
-          if (rect.top < windowH + 100 && rect.bottom > -100) {
-            if (speed !== 0) {
-              const shift =
-                (windowH / 2 - (rect.top + rect.height / 2)) * speed;
-              el.style.transform =
-                el.getAttribute("data-parallax-direction") === "x"
-                  ? `translate3d(${shift}px, 0, 0)`
-                  : `translate3d(0, ${shift}px, 0)`;
-            }
-            const glossEl = el.querySelector("[data-gloss-line]");
-            if (glossEl) {
-              const progress = (windowH - rect.top) / (windowH + rect.height);
-              const move = progress * 300 - 150;
-              glossEl.style.transform = `translateX(${move}%) rotate(45deg)`;
-            }
+          const center = windowH / 2;
+
+          // Rumus Parallax: Jarak elemen dari tengah layar * kecepatan
+          const dist = (rect.top + rect.height / 2 - center) * speed;
+
+          // Terapkan transformasi
+          if (direction === "x") {
+            (el as HTMLElement).style.transform =
+              `translate3d(${dist}px, 0, 0)`;
+          } else {
+            (el as HTMLElement).style.transform =
+              `translate3d(0, ${dist}px, 0)`;
           }
         });
       }
 
-      // --- ALL SONG MANAGER ---
+      // --- TEMPATKAN KODE BARU DI SINI (GANTIKAN ALL SONG MANAGER LAMA) ---
       const { section, container, left, right, overlay } = allSongRefs;
       if (
         section.current &&
@@ -313,91 +379,127 @@ function DiscographyContent() {
         right.current &&
         overlay.current
       ) {
-        const el = section.current;
-        const rect = el.getBoundingClientRect();
+        const rect = section.current.getBoundingClientRect();
         const scrollableH = rect.height - windowH;
+
         if (scrollableH > 0 && rect.top <= windowH && rect.bottom >= 0) {
           const progress = Math.min(Math.max(-rect.top / scrollableH, 0), 1);
-          let xL = 0,
-            xR = 0,
-            op = 0,
-            sc = 1,
-            amber = 0;
 
-          if (progress <= 0.3) {
-            const ease = 1 - Math.pow(1 - progress / 0.3, 3);
-            xL = -20 + 20 * ease;
-            xR = 20 - 20 * ease;
-            op = ease;
-          } else {
-            xL = 0;
-            xR = 0;
-            op = 1;
-          }
+          // 1. TIMELINE: 0.0 - 0.2 (Fade Text)
+          let op = progress <= 0.2 ? progress / 0.2 : 1;
 
-          if (progress > 0.3) {
-            const zProg = (progress - 0.3) / 0.7;
-            sc = 1 + Math.pow(zProg, 3) * 120;
-            amber = zProg;
-            const overlayStart = 0.65;
-            if (progress > overlayStart) {
-              const oVal = Math.min(
-                (progress - overlayStart) / (1 - overlayStart),
-                1,
+          // 2. TIMELINE: 0.2 - 0.4 (Zooming & Amber Fade)
+          const oVal = Math.min(Math.max((progress - 0.2) / 0.2, 0), 1);
+
+          const zProg = oVal;
+          const sc = 1 + Math.pow(zProg, 3) * 120;
+          const amber = zProg;
+
+          overlay.current.style.opacity = oVal.toString();
+
+          if (navRef.current) {
+            navRef.current.style.setProperty("--nav-theme", oVal.toString());
+            navRef.current.style.setProperty("--logo-op", oVal.toString());
+
+            const backBtn = navRef.current.querySelector(
+              ".back-btn-container",
+            ) as HTMLElement;
+            const toggleWrap = navRef.current.querySelector(
+              ".toggle-wrapper",
+            ) as HTMLElement;
+
+            if (backBtn && toggleWrap) {
+              const navWidth = navRef.current.offsetWidth;
+              // Hitung jarak: Lebar Nav - Padding (64px) - Lebar Toggle - Lebar Back - Gap (24px)
+              const moveDist =
+                navWidth -
+                64 -
+                toggleWrap.offsetWidth -
+                backBtn.offsetWidth -
+                24;
+
+              // Terapkan nilai geser berdasarkan progress zooming (oVal)
+              navRef.current.style.setProperty(
+                "--back-move",
+                `${moveDist * oVal}px`,
               );
-              overlay.current.style.opacity = oVal.toString();
-
-              if (navRef.current) {
-                navRef.current.style.setProperty(
-                  "--nav-theme",
-                  oVal.toString(),
-                );
-
-                // --- LOGIKA PENGUBAH WARNA TOGGLE ---
-                const activeTexts =
-                  navRef.current.querySelectorAll(".active-txt-theme");
-                const inactiveTexts = navRef.current.querySelectorAll(
-                  ".inactive-txt-theme",
-                );
-
-                if (oVal > 0.5) {
-                  // Saat background Amber & Pill Hitam -> Teks Aktif jadi PUTIH
-                  activeTexts.forEach((el: any) => (el.style.color = "white"));
-                  inactiveTexts.forEach(
-                    (el: any) => (el.style.color = "rgba(255,255,255,0.4)"),
-                  );
-                } else {
-                  // Kembali ke normal saat background Hitam
-                  activeTexts.forEach((el: any) => (el.style.color = "black"));
-                  inactiveTexts.forEach(
-                    (el: any) => (el.style.color = "rgba(255,255,255,0.5)"),
-                  );
-                }
-              }
-            } else {
-              overlay.current.style.opacity = "0";
-              if (navRef.current) {
-                navRef.current.style.setProperty("--nav-theme", "0");
-                // Reset manual saat scroll balik ke atas
-                const activeTexts =
-                  navRef.current.querySelectorAll(".active-txt-theme");
-                activeTexts.forEach((el: any) => (el.style.color = "black"));
-              }
             }
-            left.current.style.transform = `translate3d(${xL}vw, 0, 0)`;
-            right.current.style.transform = `translate3d(${xR}vw, 0, 0)`;
-            container.current.style.transform = `scale(${sc}) translate3d(0,0,0)`;
-            container.current.style.opacity = op.toString();
-            const g = 255 - 95 * amber;
-            const b = 255 - 255 * amber;
-            container.current.style.color = `rgb(255, ${Math.floor(g)}, ${Math.floor(b)})`;
-          }
-        }
 
-        // Pindahkan ini ke sini agar loop animasi tidak berhenti jika elemen All Song tidak ada
-        requestAnimationFrame(raf);
-      } // <--- KURUNG 1: Menutup if (section.current && ...)
-    } // <--- KURUNG 2: INI YANG HILANG! Menutup function raf(time)
+            const shouldShow = oVal > 0.95;
+            if (shouldShow !== showSymbolRef.current) {
+              showSymbolRef.current = shouldShow;
+              setShowSymbol(shouldShow);
+            }
+
+            // --- LOGIKA HORIZONTAL SCROLL (Hanya Aktif Jika Ready) ---
+            if (horizontalContainerRef.current) {
+              // 1. TAMBAHKAN DEKLARASI INI:
+              let targetX = 0;
+
+              if (isRectReady.current && progress > 0.4) {
+                const hProg = (progress - 0.4) / 0.6;
+                // 2. Beri nilai ke variabel yang sudah dideklarasikan
+                targetX = hProg * -3800;
+              }
+
+              horizontalContainerRef.current.style.transform = `translate3d(${targetX}px, 0, 0)`;
+
+              // --- LOGIKA EFEK OMBAK (SMOOTH WAVE) ---
+              const boxItems =
+                horizontalContainerRef.current.querySelectorAll(".box-item");
+              const vCenter = window.innerWidth / 2;
+
+              // 1. Ambil kecepatan asli
+              const targetVel = Math.abs(lenis.velocity);
+
+              // 2. LERP: Menghaluskan kecepatan (0.05 adalah faktor kehalusan)
+              // Semakin kecil angkanya (misal 0.02), semakin lambat kotak kembali ke semula.
+              smoothVelocity.current +=
+                (targetVel - smoothVelocity.current) * 0.04;
+
+              boxItems.forEach((el: any) => {
+                const rect = el.getBoundingClientRect();
+                const boxCenter = rect.left + rect.width / 2;
+                const distToCenter = Math.abs(vCenter - boxCenter);
+
+                // 1. Proximity: Seberapa dekat kotak dengan tengah layar
+                const proximity = Math.max(0, 1 - distToCenter / 600);
+
+                // 2. Kecepatan asli (bukan Math.abs) untuk menentukan arah skew
+                const rawVel = lenis.velocity;
+
+                // 3. Efek Scale: Memanjang secara vertikal
+                const scaleY = 1 + proximity * smoothVelocity.current * 0.003;
+
+                // 4. Efek Skew: Miring searah kecepatan scroll (Ciri khas Aristide)
+                // Semakin cepat scroll, semakin miring kotaknya
+                const skew = rawVel * 0.01 * proximity;
+
+                // 5. Terapkan transformasi gabungan
+                el.style.transform = `scaleY(${scaleY}) skewY(${skew}deg)`;
+              });
+            }
+
+            const activeTexts =
+              navRef.current.querySelectorAll(".active-txt-theme");
+            if (oVal > 0.5) {
+              activeTexts.forEach((el: any) => (el.style.color = "white"));
+            } else {
+              activeTexts.forEach((el: any) => (el.style.color = "black"));
+            }
+          }
+
+          container.current.style.transform = `scale(${sc}) translate3d(0,0,0)`;
+          container.current.style.opacity = op.toString();
+          const g = 255 - 95 * amber;
+          const b = 255 - 255 * amber;
+          container.current.style.color = `rgb(255, ${Math.floor(g)}, ${Math.floor(b)})`;
+        }
+      }
+      // --- SELESAI ---
+
+      requestAnimationFrame(raf);
+    }
 
     const rafId = requestAnimationFrame(raf);
     return () => {
@@ -683,7 +785,8 @@ function DiscographyContent() {
             <section
               id="allsong-section"
               ref={allSongRefs.section}
-              className="relative h-[300vh] md:h-[500vh] bg-[#050505] w-full"
+              // Ubah dari h-[500vh] menjadi h-[1000vh]
+              className="relative h-[400vh] md:h-[1000vh] bg-[#050505] w-full"
             >
               <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                 <div
@@ -748,6 +851,101 @@ function DiscographyContent() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* LAMBANG (+) KE (|) MORPHING */}
+      <AnimatePresence>
+        {showSymbol && (
+          <div className="fixed bottom-12 right-12 z-[100] flex items-center gap-6">
+            {/* ITEM MENU (Muncul dari kiri simbol) */}
+            <div className="flex flex-row-reverse items-center gap-6">
+              <AnimatePresence>
+                {isMenuOpen &&
+                  menuItems[lang].map((item: string, i: number) => (
+                    <motion.button
+                      key={item}
+                      initial={{ opacity: 0, x: 20, filter: "blur(5px)" }}
+                      animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, x: 20, filter: "blur(5px)" }}
+                      transition={{
+                        delay: i * 0.1, // Efek muncul bergantian (stagger)
+                        duration: 0.5,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className="text-black font-black text-[11px] tracking-[0.2em] uppercase hover:opacity-50 transition-opacity"
+                    >
+                      {item}
+                    </motion.button>
+                  ))}
+              </AnimatePresence>
+            </div>
+
+            {/* SIMBOL (+) KE (|) */}
+            <motion.div
+              initial={{ scale: 0, rotate: 0, opacity: 0 }}
+              animate={{
+                scale: 1,
+                rotate: 720,
+                opacity: 1,
+              }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{
+                scale: { type: "spring", stiffness: 400, damping: 15 },
+                rotate: { duration: 1.2, ease: [0.16, 1, 0.3, 1] },
+                opacity: { duration: 0.2 },
+              }}
+              className="w-16 h-16 flex items-center justify-center cursor-pointer"
+              onClick={() => setIsMenuOpen(!isMenuOpen)} // Bisa diklik untuk toggle manual
+            >
+              <div className="relative w-10 h-10 flex items-center justify-center">
+                {/* Batang Vertikal Tetap */}
+                <div className="absolute w-[4px] h-full bg-black rounded-full" />
+
+                {/* Batang Horizontal (Morphing ke Vertikal) */}
+                <motion.div
+                  initial={{ rotate: 0, scaleX: 1 }}
+                  animate={{ rotate: 90, scaleX: 0, opacity: 0 }}
+                  transition={{
+                    delay: 0.8,
+                    duration: 0.5,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute w-full h-[4px] bg-black rounded-full"
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCenterRect && (
+          <motion.div
+            initial={{ x: "100vw", opacity: 0 }}
+            animate={{ x: "0vw", opacity: 1 }}
+            exit={{ x: "-100vw", opacity: 0 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            onAnimationComplete={() => {
+              isRectReady.current = true;
+            }}
+            className="fixed inset-y-0 left-0 w-full z-[95] pointer-events-none flex items-center overflow-hidden"
+          >
+            <div
+              ref={horizontalContainerRef}
+              className="flex gap-4 pl-[50vw] will-change-transform"
+            >
+              {/* Total 16 Kotak (Sudah termasuk kotak utama) */}
+              {Array.from({ length: 16 }).map((_, i) => (
+                <div
+                  key={i}
+                  // HAPUS: transition-transform duration-300 ease-out
+                  // HAPUS: style={{ transitionProperty: "transform" }}
+                  className="box-item h-[370px] w-24 md:w-32 bg-black shrink-0 shadow-2xl origin-center will-change-transform"
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isExiting && (
