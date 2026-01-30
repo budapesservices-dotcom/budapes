@@ -262,7 +262,8 @@ function DiscographyContent() {
         right.current &&
         overlay.current
       ) {
-        const rect = section.current.getBoundingClientRect();
+        const el = section.current; // Berikan variabel lokal untuk mempermudah TS
+        const rect = el.getBoundingClientRect();
         if (rect.top <= windowH && rect.bottom >= 0) {
           const progress = Math.min(
             Math.max(-rect.top / (rect.height - windowH), 0),
