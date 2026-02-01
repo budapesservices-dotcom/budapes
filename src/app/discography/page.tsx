@@ -477,27 +477,44 @@ function DiscographyContent() {
             }
 
             // Aristide Damping (0.07) memberikan sensasi mewah
+            smoothVelocity.current +=
+              (Math.abs(lenis.velocity) - smoothVelocity.current) * 0.3;
             currentX.current += (targetX - currentX.current) * 0.07;
             const latency = targetX - currentX.current;
 
             horizontalContainerRef.current.style.transform = `translate3d(${currentX.current}px, 0, 0)`;
 
             // --- EFEK OMBAK (WAVE) ---
+            // 1. Ambil elemen box-item yang ada di dalam container
             const boxItems =
               horizontalContainerRef.current.querySelectorAll(".box-item");
-            const vCenter = window.innerWidth / 2;
-            smoothVelocity.current +=
-              (Math.abs(lenis.velocity) - smoothVelocity.current) * 0.05;
+            const vCenter = window.innerWidth / 2; // Definisikan vCenter agar tidak error
+
+            // HAPUS baris "const latency" di sini karena sudah ada di baris 400
 
             boxItems.forEach((el: any) => {
               const bRect = el.getBoundingClientRect();
+              const boxCenter = bRect.left + bRect.width / 2;
+
+              // PERSEMPIT AREA OMBAK (WIDTH)
               const proximity = Math.max(
                 0,
-                1 - Math.abs(vCenter - (bRect.left + bRect.width / 2)) / 1000,
+                1 - Math.abs(vCenter - boxCenter) / 300,
               );
-              const scaleY = 1 + smoothVelocity.current * 0.006 * proximity;
-              const skew = latency * 0.008 * proximity;
+
+              // TRANSFORMASI FISIKA
+              const scaleY = 1 + smoothVelocity.current * 0.008 * proximity;
+              const skew = latency * 0.01 * proximity; // Variabel latency mengambil dari baris 400
+
+              // EFEK WARNA (SATURATION)
+              const saturation = Math.max(
+                0,
+                1 - smoothVelocity.current * 0.1 * proximity,
+              );
+
+              // Terapkan style
               el.style.transform = `scaleY(${scaleY}) skewY(${skew}deg)`;
+              el.style.filter = `grayscale(${saturation})`;
             });
           }
           // 4. TEXT VISIBILITY
@@ -956,7 +973,7 @@ function DiscographyContent() {
               {allSongCovers.map((coverPath, i) => (
                 <div
                   key={i}
-                  className="box-item h-[180px] md:h-[250px] w-10 md:w-20 shrink-0 shadow-[0_20px_50px_rgba(0,0,0,0.5)] origin-center will-change-transform bg-cover bg-center bg-no-repeat bg-zinc-900 border border-white/5"
+                  className="box-item h-[180px] md:h-[250px] w-10 md:w-20 shrink-0 shadow-[0_20px_50px_rgba(0,0,0,0.5)] origin-center will-change-transform bg-cover bg-center bg-no-repeat bg-zinc-900 border border-white/5grayscale will-change-transform transition-[filter] duration-500"
                   style={{ backgroundImage: `url(${coverPath})` }}
                 />
               ))}
