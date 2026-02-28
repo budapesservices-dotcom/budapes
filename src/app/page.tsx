@@ -151,14 +151,16 @@ const content: Record<string, any> = {
   ],
 };
 
-const Section = ({
+export const Section = ({
   data,
   index,
   lang,
+  className, // <--- 1. Tambahkan ini
 }: {
   data: any;
   index: number;
   lang: string;
+  className?: string; // <--- 2. Tambahkan ini
 }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -193,7 +195,7 @@ const Section = ({
   return (
     <section
       ref={ref}
-      className={`relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden bg-transparent`}
+      className={`w-full relative h-[120vh] md:h-[180vh] snap-section flex items-center justify-center overflow-hidden bg-transparent ${className || ""}`}
     >
       <div
         className={`md:col-span-8 ${!isLeft ? "md:col-start-5 text-right" : "text-left"}`}
@@ -208,7 +210,7 @@ const Section = ({
           >
             <motion.div
               style={{ x, opacity, scale, filter, skewY: skew }}
-              className="container mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center"
+              className="w-full px-6 grid grid-cols-1 md:grid-cols-12 gap-6 items-center"
             >
               <div
                 className={`md:col-span-8 ${!isLeft ? "md:col-start-5 text-right" : "text-left"}`}
@@ -221,7 +223,7 @@ const Section = ({
                 <h2 className="text-5xl md:text-8xl font-black uppercase leading-[0.9] tracking-tighter mb-6 whitespace-pre-line">
                   {data.headline}
                 </h2>
-                <p className="text-base md:text-lg text-zinc-400 max-w-md leading-relaxed font-medium">
+                <p className="text-base md:text-lg text-zinc-400 leading-relaxed font-medium">
                   {data.body}
                 </p>
               </div>
@@ -233,7 +235,7 @@ const Section = ({
   );
 };
 
-export default function App() {
+export default function App({ className }: { className?: string }) {
   const [lang, setLang] = useState<"id" | "en">("id");
   const [mounted, setMounted] = useState(false);
   const [noiseIntensity, setNoiseIntensity] = useState(0.05);
@@ -309,7 +311,9 @@ export default function App() {
   };
 
   return (
-    <div className="bg-transparent text-zinc-100 font-sans selection:bg-amber-500">
+    <div
+      className={`w-full bg-transparent text-zinc-100 font-sans selection:bg-amber-500 ${className || ""}`}
+    >
       <AnimatePresence>
         {isExiting && <SharedLoading onComplete={() => router.push("/home")} />}
       </AnimatePresence>
