@@ -305,7 +305,6 @@ export default function Discography({
   const [isShuffle, setIsShuffle] = useState(false);
   const [repeatMode, setRepeatMode] = useState<"all" | "one">("all");
 
-  // Efek ini memberitahu Halaman Home jika lagu sedang diputar atau tidak
   useEffect(() => {
     if (onPlayStateChange) {
       onPlayStateChange(isPlaying);
@@ -431,12 +430,28 @@ export default function Discography({
     }
   };
 
+  // ----------------------------------------------------------------------
+  // PERBAIKAN BUG BOUNCING SCROLL DI SINI:
+  // Menggunakan kalkulasi targetScroll manual agar browser tidak
+  // menarik (scroll) halaman utama yang ada di baliknya.
+  // ----------------------------------------------------------------------
   useEffect(() => {
     if (showLyrics && lyricsContainerRef.current) {
-      const activeElement =
-        lyricsContainerRef.current.children[currentLyricIndex + 1];
+      const container = lyricsContainerRef.current;
+      const activeElement = container.children[
+        currentLyricIndex
+      ] as HTMLElement;
+
       if (activeElement) {
-        activeElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        const targetScroll =
+          activeElement.offsetTop -
+          container.clientHeight / 2 +
+          activeElement.clientHeight / 2;
+
+        container.scrollTo({
+          top: targetScroll,
+          behavior: "smooth",
+        });
       }
     }
   }, [currentLyricIndex, showLyrics]);
@@ -660,9 +675,9 @@ export default function Discography({
             : "transparent",
       }}
     >
-      {/* --- TOMBOL NAVIGASI (ATAS TENGAH - DINAMIS) --- */}
       <button
         onClick={(e) => {
+          e.stopPropagation(); // Mencegah klik menyebar ke elemen bawahnya
           if (activeItem !== null && !isPlaying) {
             handleClose(e);
           } else if (!activeItem) {
@@ -736,7 +751,10 @@ export default function Discography({
       {/* --- TOMBOL KEMBALI (CLOSE DETAIL) --- */}
       {activeItem !== null && (
         <button
-          onClick={() => setIsPlaying(false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsPlaying(false);
+          }}
           className={`fixed top-8 left-8 z-[70] flex items-center gap-3 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group ${isPlaying ? "opacity-100 translate-x-0 pointer-events-auto" : "opacity-0 -translate-x-10 pointer-events-none"}`}
           style={{ color: imagesPage2[activeItem.index].textColor }}
         >
@@ -752,7 +770,10 @@ export default function Discography({
       {/* --- TOMBOL LIRIK --- */}
       {activeItem !== null && (
         <button
-          onClick={() => setShowLyrics(!showLyrics)}
+          onClick={(e) => {
+            e.stopPropagation(); // Mencegah klik bubling
+            setShowLyrics(!showLyrics);
+          }}
           className={`fixed right-8 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center gap-4 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group ${isPlaying ? "opacity-100 translate-x-0 pointer-events-auto" : "opacity-0 translate-x-10 pointer-events-none"}`}
           style={{ color: imagesPage2[activeItem.index].textColor }}
         >
@@ -776,7 +797,10 @@ export default function Discography({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowLyrics(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLyrics(false);
+              }}
               className="fixed inset-0 z-[140] bg-black/40 backdrop-blur-sm"
             />
 
@@ -789,7 +813,10 @@ export default function Discography({
               onClick={(e) => e.stopPropagation()}
             >
               <button
-                onClick={() => setShowLyrics(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowLyrics(false);
+                }}
                 className="self-end text-white/50 hover:text-white transition-colors mb-10"
               >
                 <X size={32} />
@@ -821,7 +848,8 @@ export default function Discography({
                             ? "text-white text-3xl scale-105 font-bold opacity-100"
                             : "text-white/20 text-lg scale-100 font-normal opacity-30 hover:opacity-50"
                         }`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation(); // Mencegah loncatan klik
                           if (audioRef.current)
                             audioRef.current.currentTime = lyric.time;
                         }}
@@ -845,7 +873,10 @@ export default function Discography({
         >
           <div className="flex items-center gap-6 md:gap-8 mb-6">
             <button
-              onClick={() => setIsShuffle(!isShuffle)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsShuffle(!isShuffle);
+              }}
               className={`p-2 transition-all ${isShuffle ? "text-amber-500 scale-110" : "text-current opacity-40 hover:opacity-100"}`}
             >
               <Shuffle size={20} />
@@ -883,9 +914,10 @@ export default function Discography({
               <SkipForward size={24} fill="currentColor" />
             </button>
             <button
-              onClick={() =>
-                setRepeatMode(repeatMode === "all" ? "one" : "all")
-              }
+              onClick={(e) => {
+                e.stopPropagation();
+                setRepeatMode(repeatMode === "all" ? "one" : "all");
+              }}
               className={`p-2 transition-all ${repeatMode === "one" ? "text-amber-500 scale-110" : "text-current opacity-40 hover:opacity-100"}`}
             >
               {repeatMode === "one" ? (
@@ -899,6 +931,7 @@ export default function Discography({
             ref={progressBarRef}
             className="w-full max-w-[85vw] md:max-w-[60vw] h-8 relative flex items-center group cursor-pointer touch-none"
             onPointerDown={(e) => {
+              e.stopPropagation();
               setIsDragging(true);
               if (!progressBarRef.current) return;
               const rect = progressBarRef.current.getBoundingClientRect();
@@ -1138,7 +1171,10 @@ export default function Discography({
                         </h3>
                         <div className="w-8 h-[1px] bg-white/20 mx-auto"></div>
                         <button
-                          onClick={() => setIsFlipped(false)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsFlipped(false);
+                          }}
                           className="absolute -top-2 -right-2 p-2 text-white/20 hover:text-white transition-colors"
                         >
                           <RotateCcw size={16} />

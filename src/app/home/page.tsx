@@ -11,6 +11,7 @@ import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import ColorBends from "@/components/colorbends";
 import Discography from "@/components/discography";
+import SharedLoading from "@/lib/SharedLoading"; // <-- Import SharedLoading kembali
 
 // Memoized NavItem
 const NavItem = React.memo(function NavItem({
@@ -106,11 +107,12 @@ export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Menyeragamkan kode bahasa menggunakan "id" dan "en"
   const [lang, setLang] = useState<"id" | "en">("id");
-
   const [activeView, setActiveView] = useState<string | null>(null);
-  const [isMusicPlaying, setIsMusicPlaying] = useState<boolean>(false); // STATE BARU: Deteksi saat musik diputar
+  const [isMusicPlaying, setIsMusicPlaying] = useState<boolean>(false);
+
+  // STATE BARU: Untuk Shared Loading saat pertama kali masuk ke Home
+  const [showInitialLoading, setShowInitialLoading] = useState<boolean>(true);
 
   const content = {
     id: {
@@ -138,8 +140,8 @@ export default function App() {
         { label: "Berita", href: "/news" },
         { label: "Konsultasi", href: "/consultation" },
         { label: "Tutorial", href: "/tutorial" },
-        { label: "Kebijakan Privasi", href: "/privacy-policy" }, // Dikembalikan
-        { label: "Dukungan", href: "/support" }, // Dikembalikan
+        { label: "Kebijakan Privasi", href: "/privacy-policy" },
+        { label: "Dukungan", href: "/support" },
       ],
       helpText: "Butuh bantuan?",
       ctaText: "Hubungi Kami",
@@ -170,8 +172,8 @@ export default function App() {
         { label: "News", href: "/news" },
         { label: "Consultation", href: "/consultation" },
         { label: "Tutorial", href: "/tutorial" },
-        { label: "Privacy Policy", href: "/privacy-policy" }, // Dikembalikan
-        { label: "Support", href: "/support" }, // Dikembalikan
+        { label: "Privacy Policy", href: "/privacy-policy" },
+        { label: "Support", href: "/support" },
       ],
       helpText: "Need help?",
       ctaText: "Contact Us",
@@ -239,7 +241,20 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-full bg-[#050505] text-white font-sans selection:bg-indigo-500 selection:text-white overflow-hidden relative flex flex-col pointer-events-auto">
+    <div
+      // Matikan pointer-events saat loading agar user tidak klik sembarangan saat animasi pembuka berjalan
+      className={`h-screen w-full bg-[#050505] text-white font-sans selection:bg-indigo-500 selection:text-white overflow-hidden relative flex flex-col ${showInitialLoading ? "pointer-events-none" : "pointer-events-auto"}`}
+    >
+      {/* --- ANIMASI SHARED LOADING (HANYA MUNCUL SEKALI SAAT MASUK) --- */}
+      <AnimatePresence>
+        {showInitialLoading && (
+          <SharedLoading
+            reverse={true}
+            onComplete={() => setShowInitialLoading(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="absolute inset-0 overflow-hidden z-0 pointer-events-auto">
         <ColorBends
           colors={["#3c3939", "#1a1a1a", "#050505"]}
@@ -257,7 +272,6 @@ export default function App() {
         <div className="absolute inset-0 bg-[radial-gradient(circle,_transparent_30%,_rgba(5,5,5,0.95)_100%)] pointer-events-none" />
       </div>
 
-      {/* NAVBAR: Otomatis memudar dan naik ke atas jika isMusicPlaying == true */}
       <nav
         className={`relative z-[100] w-full flex justify-between items-center px-6 sm:px-12 py-8 shrink-0 pointer-events-none transition-all duration-700 ease-in-out ${isMusicPlaying ? "opacity-0 -translate-y-10" : "opacity-100 translate-y-0"}`}
       >
@@ -322,26 +336,21 @@ export default function App() {
                         exit={{ opacity: 0 }}
                         className="mt-14 px-8 pb-8 flex flex-col gap-2"
                       >
-                        {/* --- LABEL ATAS (SERVICES & LEGAL) --- */}
                         <div className="text-[9px] tracking-widest uppercase text-neutral-400 mb-4">
                           {t.menuLabel}
                         </div>
-
-                        {/* --- LIST MENU --- */}
                         {t.extendedMenu.map((menu, idx) => (
                           <button
                             key={idx}
                             onClick={() => {
                               setIsMenuOpen(false);
-                              handleNavigation(`${menu.href}?lang=${lang}`);
+                              // Handle menu links di sini (jika ingin dipisah jadi komponen juga bisa)
                             }}
                             className="text-left py-4 text-sm font-semibold text-neutral-600 border-b border-black/5 hover:text-black transition-colors"
                           >
                             {menu.label}
                           </button>
                         ))}
-
-                        {/* --- BAGIAN BAWAH (CONTACT US BUTTON) --- */}
                         <div className="mt-6 pt-6 flex flex-col gap-3">
                           <p className="text-[10px] text-neutral-400 font-medium">
                             {t.helpText}
@@ -349,7 +358,6 @@ export default function App() {
                           <button
                             onClick={() => {
                               setIsMenuOpen(false);
-                              handleNavigation(`/contact?lang=${lang}`);
                             }}
                             className="w-full bg-black text-white text-[10px] font-black uppercase tracking-widest py-4 rounded-xl hover:bg-neutral-800 transition-colors"
                           >
@@ -462,7 +470,6 @@ export default function App() {
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-[60] bg-black/5 backdrop-blur-sm overflow-hidden"
           >
-            {/* Mengirimkan state bahasa (lang) dan fungsi callback (onPlayStateChange) ke komponen anak */}
             {activeView === "discography" && (
               <Discography
                 lang={lang}
