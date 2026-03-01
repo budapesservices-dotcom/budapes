@@ -483,18 +483,57 @@ export default function App({ className }: { className?: string }) {
           </button>
         </div>
       </div>
-      {/* Hero Section dengan Grain Effect */}
-      <section className="relative h-screen snap-section flex flex-col justify-center items-center bg-zinc-950 overflow-hidden">
-        {/* 1. Latar Belakang Grain & Stars (DI LUAR AnimatePresence agar tidak ikut terpotong/bergeser) */}
-        <div className="absolute inset-0 z-0">
+      {/* Hero Section dengan Grain Effect & Liquid Glow */}
+      <section
+        className="relative h-screen snap-section flex flex-col justify-center items-center bg-zinc-950 overflow-hidden group"
+        // --- SENSOR MOUSE UNTUK DESKTOP ---
+        onPointerMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          e.currentTarget.style.setProperty("--x", `${x}px`);
+          e.currentTarget.style.setProperty("--y", `${y}px`);
+        }}
+        // --- SENSOR SENTUH UNTUK MOBILE ---
+        onTouchMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const touch = e.touches[0];
+          const x = touch.clientX - rect.left;
+          const y = touch.clientY - rect.top;
+          e.currentTarget.style.setProperty("--x", `${x}px`);
+          e.currentTarget.style.setProperty("--y", `${y}px`);
+        }}
+        // Menghilangkan efek saat kursor/jari pergi
+        onPointerLeave={(e) => {
+          e.currentTarget.style.setProperty("--x", `-1000px`);
+          e.currentTarget.style.setProperty("--y", `-1000px`);
+        }}
+      >
+        {/* --- EFEK CAHAYA AIR (LIQUID GLOW) --- */}
+        <div
+          className="absolute inset-0 pointer-events-none z-0 opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity duration-1000"
+          style={{
+            background: `
+              radial-gradient(
+                circle 40vw at var(--x, -1000px) var(--y, -1000px), 
+                rgba(255, 255, 255, 0.12) 0%, 
+                rgba(255, 255, 255, 0.03) 40%, 
+                transparent 80%
+              )
+            `,
+          }}
+        />
+
+        {/* 1. Latar Belakang Grain & Stars */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
           <motion.div
-            className="absolute inset-0 opacity-100"
+            className="absolute inset-0 opacity-100 mix-blend-overlay"
             style={{ filter: "url(#grainy-noise)", opacity: noiseIntensity }}
           />
           <div className="absolute inset-0 stars-container opacity-30" />
         </div>
 
-        {/* 2. Konten Teks (DI DALAM AnimatePresence untuk animasi bahasa) */}
+        {/* 2. Konten Teks (DI DALAM AnimatePresence) */}
         <AnimatePresence mode="wait">
           <motion.div
             key={lang}
@@ -504,7 +543,7 @@ export default function App({ className }: { className?: string }) {
             transition={{ duration: 0.8 }}
             className="text-center px-4 relative z-10 pointer-events-none"
           >
-            <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter">
+            <h1 className="text-[18vw] md:text-[15vw] font-black uppercase leading-[0.8] tracking-tighter drop-shadow-2xl">
               Budapes <br />
               <span className="stroke-text text-transparent italic">
                 {lang === "id" ? "Gema" : "Echoes"}

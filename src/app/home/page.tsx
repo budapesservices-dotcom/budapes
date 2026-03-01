@@ -11,7 +11,8 @@ import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import ColorBends from "@/components/colorbends";
 import Discography from "@/components/discography";
-import SharedLoading from "@/lib/SharedLoading"; // <-- Import SharedLoading kembali
+import Portfolio from "@/components/portfolio"; // <-- 1. IMPORT PORTFOLIO DI SINI
+import SharedLoading from "@/lib/SharedLoading";
 
 // Memoized NavItem
 const NavItem = React.memo(function NavItem({
@@ -111,7 +112,6 @@ export default function App() {
   const [activeView, setActiveView] = useState<string | null>(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState<boolean>(false);
 
-  // STATE BARU: Untuk Shared Loading saat pertama kali masuk ke Home
   const [showInitialLoading, setShowInitialLoading] = useState<boolean>(true);
 
   const content = {
@@ -242,10 +242,8 @@ export default function App() {
 
   return (
     <div
-      // Matikan pointer-events saat loading agar user tidak klik sembarangan saat animasi pembuka berjalan
       className={`h-screen w-full bg-[#050505] text-white font-sans selection:bg-indigo-500 selection:text-white overflow-hidden relative flex flex-col ${showInitialLoading ? "pointer-events-none" : "pointer-events-auto"}`}
     >
-      {/* --- ANIMASI SHARED LOADING (HANYA MUNCUL SEKALI SAAT MASUK) --- */}
       <AnimatePresence>
         {showInitialLoading && (
           <SharedLoading
@@ -275,7 +273,12 @@ export default function App() {
       <nav
         className={`relative z-[100] w-full flex justify-between items-center px-6 sm:px-12 py-8 shrink-0 pointer-events-none transition-all duration-700 ease-in-out ${isMusicPlaying ? "opacity-0 -translate-y-10" : "opacity-100 translate-y-0"}`}
       >
-        <div className="w-16 h-16 flex items-center justify-center overflow-hidden pointer-events-auto">
+        {/* LOGO BUDAPES: Akan menghilang (naik & pudar) saat activeView terbuka */}
+        <div
+          className={`w-16 h-16 flex items-center justify-center overflow-hidden pointer-events-auto transition-all duration-700 ease-in-out
+            ${activeView ? "opacity-0 -translate-y-10 pointer-events-none" : "opacity-100 translate-y-0"}
+          `}
+        >
           <video
             src="/logo-transparan.webm"
             autoPlay
@@ -344,7 +347,6 @@ export default function App() {
                             key={idx}
                             onClick={() => {
                               setIsMenuOpen(false);
-                              // Handle menu links di sini (jika ingin dipisah jadi komponen juga bisa)
                             }}
                             className="text-left py-4 text-sm font-semibold text-neutral-600 border-b border-black/5 hover:text-black transition-colors"
                           >
@@ -479,6 +481,11 @@ export default function App() {
                   setIsMusicPlaying(false);
                 }}
               />
+            )}
+
+            {/* 2. TAMBAHAN RENDER UNTUK PORTFOLIO DI SINI */}
+            {activeView === "portfolio" && (
+              <Portfolio lang={lang} onClose={() => setActiveView(null)} />
             )}
           </motion.div>
         )}
