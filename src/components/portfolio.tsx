@@ -11,20 +11,21 @@ export default function Portfolio({
   onClose: () => void;
   lang: string;
 }) {
-  // STATE
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   const [clickedSection, setClickedSection] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
-  // Deteksi Mobile vs Desktop untuk membedakan Timing Animasi
+  // STATE ANIMASI & GALERI
+  const [exitingSection, setExitingSection] = useState<string | null>(null);
+  const [openedGallery, setOpenedGallery] = useState<string | null>(null);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    handleResize(); // Cek saat pertama kali dimuat
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Kamus Bahasa
   const t = {
     id: {
       close: "Tutup Portofolio",
@@ -33,6 +34,7 @@ export default function Portfolio({
       originalSub: "Eksplorasi idealisme dan visi murni Budapes Studio.",
       clientSub: "Kolaborasi profesional dan eksekusi komersial.",
       confirmTap: "Tap lagi untuk masuk →",
+      scrollDown: "Scroll ke bawah",
     },
     en: {
       close: "Close Portfolio",
@@ -41,31 +43,34 @@ export default function Portfolio({
       originalSub: "Exploration of pure idealism and Budapes vision.",
       clientSub: "Professional collaborations and commercial execution.",
       confirmTap: "Tap again to enter →",
+      scrollDown: "Scroll down",
     },
   }[lang as "id" | "en"];
 
-  // LOGIKA INTERAKSI
-  const handleAction = (type: string) => {
-    console.log("Membuka Galeri:", type);
-    // TODO: Nanti kita tambahkan state untuk memunculkan Grid Kartu di sini
+  // LOGIKA MASUK KE GALERI
+  const handleAction = (sectionId: string) => {
+    if (exitingSection) return;
+    setExitingSection(sectionId);
+    setTimeout(() => {
+      setOpenedGallery(sectionId);
+    }, 800);
   };
 
   const handleInteraction = (sectionId: string) => {
+    if (exitingSection) return;
     const isTouchDevice =
       typeof window !== "undefined" &&
       window.matchMedia("(pointer: coarse)").matches;
     if (isTouchDevice) {
-      if (clickedSection === sectionId) {
-        handleAction(sectionId);
-      } else {
-        setClickedSection(sectionId);
-      }
+      if (clickedSection === sectionId) handleAction(sectionId);
+      else setClickedSection(sectionId);
     } else {
       handleAction(sectionId);
     }
   };
 
   const handleMouseEnter = (sectionId: string) => {
+    if (exitingSection) return;
     if (
       typeof window !== "undefined" &&
       !window.matchMedia("(pointer: coarse)").matches
@@ -75,6 +80,7 @@ export default function Portfolio({
   };
 
   const handleMouseLeave = () => {
+    if (exitingSection) return;
     if (
       typeof window !== "undefined" &&
       !window.matchMedia("(pointer: coarse)").matches
@@ -83,7 +89,6 @@ export default function Portfolio({
     }
   };
 
-  // KOMPONEN REUSABLE UNTUK SESI
   const renderSection = (
     id: string,
     title: string,
@@ -91,32 +96,38 @@ export default function Portfolio({
     videoFile: string,
   ) => {
     const isActive = hoveredSection === id || clickedSection === id;
+    const isThisExiting = exitingSection === id;
+
+    // Background putih section
+    const bgClass =
+      isActive || isThisExiting
+        ? "bg-white text-black"
+        : "bg-black/80 backdrop-blur-sm text-white";
+
+    // LOGIKA PARALLAX
+    const parallaxY = id === "original" ? -80 : 80;
 
     return (
       <section
-        onClick={() => setClickedSection(null)}
-        className={`relative w-full h-screen shrink-0 snap-start flex flex-col justify-center px-8 md:px-20 transition-all duration-[800ms] ease-in-out overflow-hidden
-          ${isActive ? "bg-white text-black" : "bg-black/80 backdrop-blur-sm text-white"}
-        `}
+        onClick={() => !exitingSection && setClickedSection(null)}
+        className={`relative w-full h-screen shrink-0 snap-start flex flex-col justify-center px-8 md:px-20 transition-all duration-[800ms] ease-in-out overflow-hidden ${bgClass}`}
       >
         {/* =========================================
-            EFEK VIDEO TINTA
+            VIDEO TINTA (REVISI HILANG INSTAN)
             ========================================= */}
         <AnimatePresence>
-          {isActive && (
+          {isActive && !exitingSection && (
             <motion.div
-              // TIMING MAKIN CEPAT DI HP: isMobile delay cuma 0.1s
               initial={{ opacity: 0 }}
               animate={{
                 opacity: 1,
                 transition: { delay: isMobile ? 0.1 : 0.8, duration: 0.3 },
               }}
+              // PERBAIKAN DI SINI: duration diubah menjadi 0 agar hilang seketika saat hover dilepas
               exit={{ opacity: 0, transition: { duration: 0 } }}
-              // POSISI HP NAIK: dari bottom-12 menjadi bottom-28
               className="absolute bottom-28 left-1/2 -translate-x-1/2 w-[95%] md:left-auto md:translate-x-0 md:right-0 md:bottom-0 md:w-3/5 md:max-w-7xl z-0 aspect-[16/10] overflow-hidden pointer-events-none md:origin-bottom-right"
             >
               <div className="absolute inset-0 z-10 bg-transparent w-full h-full" />
-
               <video
                 src={videoFile}
                 autoPlay
@@ -134,7 +145,7 @@ export default function Portfolio({
           <button
             onClick={onClose}
             className={`absolute top-10 md:top-12 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 group/btn transition-all duration-700
-              ${isActive ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}
+              ${exitingSection ? "opacity-0 -translate-y-10 pointer-events-none" : isActive ? "opacity-0 pointer-events-none" : "opacity-100 pointer-events-auto"}
             `}
           >
             <span className="text-[9px] md:text-[11px] font-black tracking-[0.6em] text-white/50 group-hover/btn:text-white uppercase transition-colors text-center">
@@ -144,16 +155,28 @@ export default function Portfolio({
           </button>
         )}
 
-        {/* KONTEN UTAMA */}
-        <div className="relative z-10 flex flex-col items-start -mt-12 md:-mt-24 pointer-events-none">
+        {/* KONTEN UTAMA DENGAN EFEK PARALLAX */}
+        <motion.div
+          initial={{ opacity: 0, y: parallaxY }}
+          whileInView={
+            isThisExiting ? { opacity: 0, y: -50 } : { opacity: 1, y: 0 }
+          }
+          viewport={{ once: false, amount: 0.3 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative z-10 flex flex-col items-start -mt-12 md:-mt-24 pointer-events-none"
+        >
           <h2 className="text-[11vw] md:text-[7rem] lg:text-[9rem] font-display font-black uppercase leading-[0.85] tracking-tighter drop-shadow-lg">
             {title}
           </h2>
 
           <div className="mt-6 md:mt-10 flex items-center gap-4 md:gap-6 min-h-[60px] md:min-h-[80px] pointer-events-auto">
             <div
-              onMouseEnter={() => !isMobile && setHoveredSection(id)}
-              onMouseLeave={() => !isMobile && setHoveredSection(null)}
+              onMouseEnter={() =>
+                !isMobile && !exitingSection && setHoveredSection(id)
+              }
+              onMouseLeave={() =>
+                !isMobile && !exitingSection && setHoveredSection(null)
+              }
               onClick={(e) => {
                 e.stopPropagation();
                 handleInteraction(id);
@@ -184,7 +207,7 @@ export default function Portfolio({
                     >
                       {subtitle}
                     </span>
-                    {clickedSection === id && (
+                    {clickedSection === id && !exitingSection && (
                       <motion.span
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -200,30 +223,83 @@ export default function Portfolio({
               )}
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
 
-        {/* INDIKATOR SCROLL */}
+        {/* INDIKATOR SCROLL DENGAN TEKS ABU-ABU */}
         {id === "original" && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce opacity-30 transition-opacity duration-500 pointer-events-none">
-            <div className="w-[1px] h-12 bg-white mx-auto"></div>
-          </div>
+          <motion.div
+            animate={
+              exitingSection ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }
+            }
+            className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 transition-opacity duration-500 pointer-events-none"
+          >
+            <div className="w-[1px] h-10 md:h-12 bg-white mx-auto animate-bounce opacity-30"></div>
+            <span className="text-[8px] md:text-[9px] font-bold tracking-[0.3em] uppercase text-zinc-500 opacity-80">
+              {t.scrollDown}
+            </span>
+          </motion.div>
         )}
       </section>
     );
   };
 
+  // KANVAS INDUK (WRAPPER)
+  const rootBgClass =
+    exitingSection || openedGallery ? "bg-white" : "bg-transparent";
+
   return (
     <div
-      className="relative w-full h-screen flex flex-col font-sans overflow-y-auto overflow-x-hidden snap-y snap-mandatory scrollbar-hide"
-      style={{ scrollBehavior: "smooth" }}
+      className={`relative w-full h-screen font-sans overflow-hidden ${rootBgClass}`}
     >
-      {renderSection(
-        "original",
-        t.original,
-        t.originalSub,
-        "/originalworkintro.mp4",
+      {/* 1. LAYER MENU */}
+      {!openedGallery && (
+        <div
+          className={`w-full h-full flex flex-col snap-y snap-mandatory scrollbar-hide overflow-x-hidden ${exitingSection ? "overflow-y-hidden pointer-events-none" : "overflow-y-auto"}`}
+          style={{ scrollBehavior: "smooth" }}
+        >
+          {renderSection(
+            "original",
+            t.original,
+            t.originalSub,
+            "/originalworkintro.mp4",
+          )}
+          {renderSection(
+            "client",
+            t.client,
+            t.clientSub,
+            "/clientworkintro.mp4",
+          )}
+        </div>
       )}
-      {renderSection("client", t.client, t.clientSub, "/clientworkintro.mp4")}
+
+      {/* 2. LAYER GALERI */}
+      {openedGallery && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="absolute inset-0 w-full h-full bg-white text-black flex flex-col items-center justify-center px-6 z-50 overflow-y-auto"
+        >
+          <h2 className="text-5xl md:text-8xl font-display font-black uppercase mb-4 tracking-tighter text-center">
+            {openedGallery === "original" ? t.original : t.client}
+          </h2>
+          <p className="text-zinc-500 tracking-widest uppercase text-xs md:text-sm mb-12 font-medium text-center">
+            Galeri Segera Hadir (Tahap Pengembangan)
+          </p>
+
+          <button
+            onClick={() => {
+              setOpenedGallery(null);
+              setExitingSection(null);
+              setHoveredSection(null);
+              setClickedSection(null);
+            }}
+            className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase border border-black/20 px-8 py-4 rounded-full hover:bg-black hover:text-white transition-all duration-500"
+          >
+            Kembali ke Menu
+          </button>
+        </motion.div>
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap');
