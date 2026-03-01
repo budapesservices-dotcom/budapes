@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoveRight } from "lucide-react";
+import OriginalWork from "./originalwork";
 
 export default function Portfolio({
   onClose,
@@ -278,26 +279,39 @@ export default function Portfolio({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="absolute inset-0 w-full h-full bg-white text-black flex flex-col items-center justify-center px-6 z-50 overflow-y-auto"
+          className="absolute inset-0 w-full h-full z-50"
         >
-          <h2 className="text-5xl md:text-8xl font-display font-black uppercase mb-4 tracking-tighter text-center">
-            {openedGallery === "original" ? t.original : t.client}
-          </h2>
-          <p className="text-zinc-500 tracking-widest uppercase text-xs md:text-sm mb-12 font-medium text-center">
-            Galeri Segera Hadir (Tahap Pengembangan)
-          </p>
-
-          <button
-            onClick={() => {
-              setOpenedGallery(null);
-              setExitingSection(null);
-              setHoveredSection(null);
-              setClickedSection(null);
-            }}
-            className="text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase border border-black/20 px-8 py-4 rounded-full hover:bg-black hover:text-white transition-all duration-500"
-          >
-            Kembali ke Menu
-          </button>
+          {openedGallery === "original" ? (
+            <OriginalWork
+              lang={lang}
+              onBack={() => {
+                // Fungsi untuk mereset semua state dan menutup galeri
+                setOpenedGallery(null);
+                setExitingSection(null);
+                setHoveredSection(null);
+                setClickedSection(null);
+              }}
+            />
+          ) : (
+            // Placeholder untuk Karya Klien (nanti kita buat terpisah)
+            <div className="w-full h-screen bg-black text-white flex flex-col items-center justify-center">
+              <h2 className="text-4xl font-display uppercase">Karya Klien</h2>
+              <p className="text-zinc-500 mt-4 uppercase tracking-widest text-xs">
+                Segera Hadir
+              </p>
+              <button
+                onClick={() => {
+                  setOpenedGallery(null);
+                  setExitingSection(null);
+                  setHoveredSection(null);
+                  setClickedSection(null);
+                }}
+                className="mt-8 text-[10px] font-bold tracking-[0.3em] uppercase border border-white/20 px-8 py-4 rounded-full hover:bg-white hover:text-black transition-all"
+              >
+                Kembali ke Menu
+              </button>
+            </div>
+          )}
         </motion.div>
       )}
 
