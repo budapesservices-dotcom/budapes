@@ -7,7 +7,6 @@ import {
   ChevronsDown,
   ChevronLeft,
   ChevronRight,
-  Plus,
   ArrowLeft,
   Pause,
   SkipBack,
@@ -256,10 +255,6 @@ const ANIM_CSS = `${ANIM_DURATION}ms ${ANIM_BEZIER}`;
 const lerp = (start: number, end: number, factor: number) =>
   start + (end - start) * factor;
 
-// ==========================================
-// 2. DISCOGRAPHY REUSABLE COMPONENT
-// ==========================================
-
 export default function Discography({
   onClose,
   lang,
@@ -275,19 +270,20 @@ export default function Discography({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [isSongPlaying, setIsSongPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [currentTime, setCurrentTime] = useState("0:00");
-  const [duration, setDuration] = useState("0:00");
   const [showLyrics, setShowLyrics] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
 
   const [currentLyricIndex, setCurrentLyricIndex] = useState(0);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
+  // OPTIMASI PERFORMA: Menggunakan useRef alih-alih useState untuk progress bar
+  const progressRef = useRef(0);
+  const progressFillRef = useRef<HTMLDivElement>(null);
+  const progressKnobRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
   const progressBarRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -321,6 +317,7 @@ export default function Discography({
     }
   }, [activeItem]);
 
+  // --- LOGIKA SCROLL GALERI ---
   useEffect(() => {
     const updateDimensions = () => {
       windowWidthRef.current = window.innerWidth;
@@ -330,7 +327,7 @@ export default function Discography({
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
 
-    const handleWheel = (e: any) => {
+    const handleWheel = (e: WheelEvent) => {
       if (activeItem !== null || isTransitioning || isPlaying) return;
       const delta = e.deltaY || e.deltaX;
       scrollData.current.target += delta;
@@ -341,7 +338,31 @@ export default function Discography({
         Math.min(scrollData.current.target, maxScroll > 0 ? maxScroll : 0),
       );
     };
+
+    let lastTouchX = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      if (activeItem !== null || isTransitioning || isPlaying) return;
+      lastTouchX = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (activeItem !== null || isTransitioning || isPlaying) return;
+      const currentX = e.touches[0].clientX;
+      const deltaX = lastTouchX - currentX;
+
+      scrollData.current.target += deltaX * 2;
+      lastTouchX = currentX;
+
+      const maxScroll = contentWidthRef.current - windowWidthRef.current;
+      scrollData.current.target = Math.max(
+        0,
+        Math.min(scrollData.current.target, maxScroll > 0 ? maxScroll : 0),
+      );
+    };
+
     window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
 
     let animationFrameId: number;
     const animate = () => {
@@ -368,6 +389,8 @@ export default function Discography({
     return () => {
       window.removeEventListener("resize", updateDimensions);
       window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
       cancelAnimationFrame(animationFrameId);
     };
   }, [activeItem, isTransitioning, isExpanded, isPlaying]);
@@ -391,8 +414,6 @@ export default function Discography({
   useEffect(() => {
     if (!isPlaying) {
       setIsSongPlaying(false);
-      setProgress(0);
-      setCurrentTime("0:00");
       setShowLyrics(false);
       setCurrentLyricIndex(0);
       setIsFlipped(false);
@@ -403,22 +424,20 @@ export default function Discography({
     }
   }, [isPlaying]);
 
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
+  // OPTIMASI: Update Progress Bar via DOM (Tanpa re-render React)
   const handleTimeUpdate = () => {
     if (audioRef.current && !isDragging) {
       const current = audioRef.current.currentTime;
       const total = audioRef.current.duration;
-      const progressPercent = (current / total) * 100;
+      const progressPercent = (current / total) * 100 || 0;
 
-      setProgress(progressPercent || 0);
-      setCurrentTime(formatTime(current));
-      setDuration(formatTime(total));
+      progressRef.current = progressPercent;
+
+      // Update Lebar & Posisi Bola langsung ke DOM
+      if (progressFillRef.current)
+        progressFillRef.current.style.width = `${progressPercent}%`;
+      if (progressKnobRef.current)
+        progressKnobRef.current.style.left = `${progressPercent}%`;
 
       const activeIndex = currentLyrics.findLastIndex(
         (l: any) => l.time <= current,
@@ -430,11 +449,6 @@ export default function Discography({
     }
   };
 
-  // ----------------------------------------------------------------------
-  // PERBAIKAN BUG BOUNCING SCROLL DI SINI:
-  // Menggunakan kalkulasi targetScroll manual agar browser tidak
-  // menarik (scroll) halaman utama yang ada di baliknya.
-  // ----------------------------------------------------------------------
   useEffect(() => {
     if (showLyrics && lyricsContainerRef.current) {
       const container = lyricsContainerRef.current;
@@ -468,6 +482,8 @@ export default function Discography({
       }
       setIsSongPlaying(true);
       setCurrentLyricIndex(0);
+      if (progressFillRef.current) progressFillRef.current.style.width = `0%`;
+      if (progressKnobRef.current) progressKnobRef.current.style.left = `0%`;
       if (lyricsContainerRef.current) {
         lyricsContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -482,9 +498,12 @@ export default function Discography({
 
     setPrevIndex(activeItem.index);
     setSlideDir("next");
-    setProgress(0);
-    setCurrentTime("0:00");
     setCurrentLyricIndex(0);
+
+    // Reset Progress Bar
+    progressRef.current = 0;
+    if (progressFillRef.current) progressFillRef.current.style.width = `0%`;
+    if (progressKnobRef.current) progressKnobRef.current.style.left = `0%`;
 
     const viewportWidth = window.innerWidth;
     const itemEl = itemRefs.current[nextIndex];
@@ -507,14 +526,19 @@ export default function Discography({
       const rect = progressBarRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      setProgress(percentage);
+
+      progressRef.current = percentage;
+      if (progressFillRef.current)
+        progressFillRef.current.style.width = `${percentage}%`;
+      if (progressKnobRef.current)
+        progressKnobRef.current.style.left = `${percentage}%`;
     };
 
     const handleGlobalUp = () => {
       if (isDragging && audioRef.current) {
         if (isFinite(audioRef.current.duration)) {
-          const newTime = (progress / 100) * audioRef.current.duration;
-
+          const newTime =
+            (progressRef.current / 100) * audioRef.current.duration;
           if (isFinite(newTime)) {
             audioRef.current.currentTime = newTime;
           }
@@ -532,11 +556,10 @@ export default function Discography({
       window.removeEventListener("pointermove", handleGlobalMove);
       window.removeEventListener("pointerup", handleGlobalUp);
     };
-  }, [isDragging, progress]);
+  }, [isDragging]);
 
   const handleImageClick = (index: number, e: any) => {
     if (isExpanded || isTransitioning || isPlaying) return;
-    setIsMenuOpen(false);
     setIsTransitioning(true);
     setSlideDir("next");
     setPrevIndex(null);
@@ -573,8 +596,10 @@ export default function Discography({
       audioRef.current.currentTime > 2
     ) {
       audioRef.current.currentTime = 0;
-      setProgress(0);
       setCurrentLyricIndex(0);
+      progressRef.current = 0;
+      if (progressFillRef.current) progressFillRef.current.style.width = `0%`;
+      if (progressKnobRef.current) progressKnobRef.current.style.left = `0%`;
       return;
     }
 
@@ -586,9 +611,11 @@ export default function Discography({
       setPrevIndex(activeItem.index);
     }
 
-    setProgress(0);
-    setCurrentTime("0:00");
     setCurrentLyricIndex(0);
+    progressRef.current = 0;
+    if (progressFillRef.current) progressFillRef.current.style.width = `0%`;
+    if (progressKnobRef.current) progressKnobRef.current.style.left = `0%`;
+
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
     }
@@ -677,7 +704,7 @@ export default function Discography({
     >
       <button
         onClick={(e) => {
-          e.stopPropagation(); // Mencegah klik menyebar ke elemen bawahnya
+          e.stopPropagation();
           if (activeItem !== null && !isPlaying) {
             handleClose(e);
           } else if (!activeItem) {
@@ -729,6 +756,12 @@ export default function Discography({
         }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.6); }
+
         .mask-gradient {
           mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
           -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
@@ -755,7 +788,7 @@ export default function Discography({
             e.stopPropagation();
             setIsPlaying(false);
           }}
-          className={`fixed top-8 left-8 z-[70] flex items-center gap-3 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group ${isPlaying ? "opacity-100 translate-x-0 pointer-events-auto" : "opacity-0 -translate-x-10 pointer-events-none"}`}
+          className={`fixed top-8 left-6 md:left-8 z-[30] flex items-center gap-3 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group ${isPlaying && !isFlipped ? "opacity-100 translate-x-0 pointer-events-auto" : "opacity-0 -translate-x-10 pointer-events-none"}`}
           style={{ color: imagesPage2[activeItem.index].textColor }}
         >
           <div className="p-2 rounded-full border border-current group-hover:bg-white/10 transition-colors">
@@ -771,10 +804,10 @@ export default function Discography({
       {activeItem !== null && (
         <button
           onClick={(e) => {
-            e.stopPropagation(); // Mencegah klik bubling
+            e.stopPropagation();
             setShowLyrics(!showLyrics);
           }}
-          className={`fixed right-8 top-1/2 -translate-y-1/2 z-[70] flex flex-col items-center gap-4 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group ${isPlaying ? "opacity-100 translate-x-0 pointer-events-auto" : "opacity-0 translate-x-10 pointer-events-none"}`}
+          className={`fixed right-4 md:right-8 top-1/2 -translate-y-1/2 z-[30] flex flex-col items-center gap-4 transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.2,0.8,0.2,1)] group ${isPlaying && !isFlipped ? "opacity-100 translate-x-0 pointer-events-auto" : "opacity-0 translate-x-10 pointer-events-none"}`}
           style={{ color: imagesPage2[activeItem.index].textColor }}
         >
           <span
@@ -849,7 +882,7 @@ export default function Discography({
                             : "text-white/20 text-lg scale-100 font-normal opacity-30 hover:opacity-50"
                         }`}
                         onClick={(e) => {
-                          e.stopPropagation(); // Mencegah loncatan klik
+                          e.stopPropagation();
                           if (audioRef.current)
                             audioRef.current.currentTime = lyric.time;
                         }}
@@ -940,16 +973,18 @@ export default function Discography({
                 0,
                 Math.min(100, (x / rect.width) * 100),
               );
-              setProgress(clickedProgress);
+              progressRef.current = clickedProgress;
+              if (progressFillRef.current)
+                progressFillRef.current.style.width = `${clickedProgress}%`;
+              if (progressKnobRef.current)
+                progressKnobRef.current.style.left = `${clickedProgress}%`;
             }}
           >
             <div className="w-full h-[2px] relative bg-current opacity-20 pointer-events-none">
               <div
+                ref={progressFillRef}
                 className="absolute top-0 left-0 h-full overflow-hidden ease-linear"
-                style={{
-                  width: `${progress}%`,
-                  transition: isDragging ? "none" : "width 100ms linear",
-                }}
+                style={{ width: "0%" }}
               >
                 <div
                   className="absolute top-0 left-0 h-full w-[85vw] md:w-[60vw]"
@@ -970,11 +1005,9 @@ export default function Discography({
             </div>
 
             <div
+              ref={progressKnobRef}
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
-              style={{
-                left: `${progress}%`,
-                transition: isDragging ? "none" : "left 100ms linear",
-              }}
+              style={{ left: "0%" }}
             >
               <div
                 className="w-3 h-3 bg-current rounded-full"
@@ -998,23 +1031,23 @@ export default function Discography({
             lang === "id" ? currentImg.title : currentImg.titleEn;
           const len = activeTitle.length;
 
-          let fontSizeClass = "text-[15vw] md:text-[5vw]";
+          let fontSizeClass = "text-[14vw] md:text-[5vw]";
           let topPos = "19vh";
 
           if (len > 10) {
-            fontSizeClass = "text-[3.5vw] md:text-[4.5vw]";
+            fontSizeClass = "text-[11vw] md:text-[4.5vw]";
             topPos = "20vh";
           }
           if (len > 15) {
-            fontSizeClass = "text-[5.5vw] md:text-[3.5vw]";
+            fontSizeClass = "text-[9vw] md:text-[3.5vw]";
             topPos = "21vh";
           }
           if (len > 18) {
-            fontSizeClass = "text-[5.5vw] md:text-[3vw]";
+            fontSizeClass = "text-[8vw] md:text-[3vw]";
             topPos = "23vh";
           }
           if (len > 20) {
-            fontSizeClass = "text-[5.5vw] md:text-[2vw]";
+            fontSizeClass = "text-[7vw] md:text-[2vw]";
             topPos = "18vh";
           }
 
@@ -1084,11 +1117,25 @@ export default function Discography({
           );
         })()}
 
-      {/* --- OVERLAY KARTU --- */}
+      {/* --- OVERLAY KARTU 3D --- */}
       {activeItem !== null &&
         (() => {
           const currentImg = imagesPage2[activeItem.index];
-          const boxSizeVal = isPlaying ? (isFlipped ? 42 : 40) : 55;
+
+          const isMobileView =
+            typeof window !== "undefined" && window.innerWidth < 768;
+          const boxSizeVal = isPlaying
+            ? isMobileView
+              ? isFlipped
+                ? 80 // Ukuran belakang mobile proporsional
+                : 55 // Ukuran depan mobile (diperkecil agar tak nempel)
+              : isFlipped
+                ? 42
+                : 40
+            : isMobileView
+              ? 65 // Diperkecil saat thumbnail membesar pertama kali
+              : 55;
+
           const boxSize = `${boxSizeVal}vmin`;
 
           const expandedStyle = {
@@ -1110,7 +1157,7 @@ export default function Discography({
           const finalStyle = isExpanded ? expandedStyle : thumbnailStyle;
 
           return (
-            <div className="fixed inset-0 z-40 pointer-events-none perspective-1000">
+            <div className="fixed inset-0 z-50 pointer-events-none perspective-1000">
               <div
                 className={`fixed z-50 transition-all duration-[1000ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isPlaying ? "pointer-events-auto cursor-pointer" : "pointer-events-auto"}`}
                 onClick={handleCoverClick}
@@ -1124,7 +1171,14 @@ export default function Discography({
                 <div
                   className={`relative w-full h-full duration-700 transform-style-3d transition-transform ${isFlipped ? "rotate-y-180" : ""}`}
                 >
-                  <div className="absolute inset-0 w-full h-full backface-hidden overflow-hidden">
+                  {/* --- SISI DEPAN (FRONT FACE) --- */}
+                  <div
+                    className="absolute inset-0 w-full h-full backface-hidden overflow-hidden"
+                    style={{
+                      pointerEvents: isFlipped ? "none" : "auto",
+                      // Menghapus animasi opacity untuk performa 60fps murni
+                    }}
+                  >
                     {prevIndex !== null && (
                       <img
                         src={imagesPage2[prevIndex].url}
@@ -1157,14 +1211,21 @@ export default function Discography({
                       </div>
                     )}
                   </div>
-                  {/* --- SISI BELAKANG COVER (SONG INFO) --- */}
-                  <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-zinc-950 text-white p-4 border border-white/10 overflow-hidden shadow-2xl">
+
+                  {/* --- SISI BELAKANG COVER (SONG INFO & SCROLLABLE AREA) --- */}
+                  <div
+                    className="absolute inset-0 w-full h-full backface-hidden bg-zinc-950 text-white p-3 md:p-4 border border-white/10 shadow-2xl"
+                    style={{
+                      transform: "rotateY(180deg) translateZ(1px)",
+                      pointerEvents: isFlipped ? "auto" : "none",
+                    }}
+                  >
                     <div
-                      className="w-full h-full bg-zinc-900/50 rounded-2xl border border-white/5 p-6 flex flex-col pointer-events-auto"
+                      className="w-full h-full bg-zinc-900/50 rounded-2xl border border-white/5 p-4 md:p-6 flex flex-col relative overflow-hidden"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="shrink-0 text-center mb-6 relative">
-                        <h3 className="text-xl md:text-2xl font-display font-bold tracking-tighter text-amber-500 uppercase leading-none mb-2">
+                      <div className="shrink-0 text-center mb-3 md:mb-6 relative z-20">
+                        <h3 className="text-lg md:text-2xl font-display font-bold tracking-tighter text-amber-500 uppercase leading-none mb-2 pr-6">
                           {lang === "id"
                             ? currentImg.title
                             : currentImg.titleEn}
@@ -1175,18 +1236,29 @@ export default function Discography({
                             e.stopPropagation();
                             setIsFlipped(false);
                           }}
-                          className="absolute -top-2 -right-2 p-2 text-white/20 hover:text-white transition-colors"
+                          className="absolute -top-2 -right-2 p-2 text-white/20 hover:text-white transition-colors z-30 cursor-pointer"
                         >
                           <RotateCcw size={16} />
                         </button>
                       </div>
-                      <div className="flex-1 overflow-y-auto scrollbar-hide space-y-6 pr-1 touch-auto">
-                        <div className="grid grid-cols-2 gap-4">
+
+                      <div
+                        className="flex-1 h-0 overflow-y-auto custom-scrollbar space-y-4 md:space-y-6 pr-3 pb-6 relative z-10"
+                        style={{
+                          WebkitOverflowScrolling: "touch",
+                          overscrollBehavior: "contain",
+                          pointerEvents: "auto",
+                        }}
+                        onWheel={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                      >
+                        <div className="grid grid-cols-2 gap-3 md:gap-4">
                           <div className="bg-white/5 p-3 rounded-xl border border-white/5">
                             <p className="text-[8px] font-bold tracking-[0.2em] text-white/40 uppercase mb-1">
                               {translationsPage2[lang].releaseYear}
                             </p>
-                            <p className="text-sm font-display font-bold">
+                            <p className="text-xs md:text-sm font-display font-bold">
                               {currentImg.year}
                             </p>
                           </div>
@@ -1194,19 +1266,24 @@ export default function Discography({
                             <p className="text-[8px] font-bold tracking-[0.2em] text-white/40 uppercase mb-1">
                               {translationsPage2[lang].genre}
                             </p>
-                            <p className="text-sm font-display font-bold truncate">
+                            <p className="text-xs md:text-sm font-display font-bold truncate">
                               {currentImg.genre}
                             </p>
                           </div>
                         </div>
-                        <div className="space-y-3 text-left">
+                        <div className="space-y-2 md:space-y-3 text-left">
                           <p className="text-[8px] font-bold tracking-[0.2em] text-amber-500/50 uppercase">
                             {translationsPage2[lang].description}
                           </p>
-                          <p className="text-xs leading-relaxed text-white/60 font-medium">
+                          <p className="text-xs md:text-sm leading-relaxed text-white/70 font-medium">
                             {lang === "id"
                               ? `Lagu ini merupakan eksplorasi mendalam dari Budapes Studio yang menggabungkan elemen ${currentImg.genre} dengan narasi puitis yang kuat. Aransemen ini dirancang untuk membawa pendengar ke dalam atmosfer dimensi yang berbeda, sejalan dengan visi artistik album tahun ${currentImg.year}.`
                               : `This song is a profound exploration by Budapes Studio, combining ${currentImg.genre} elements with a strong poetic narrative. The arrangement is designed to transport listeners into a different dimensional atmosphere, aligning with the artistic vision of the ${currentImg.year} album.`}
+                          </p>
+                          <p className="text-xs md:text-sm leading-relaxed text-white/70 font-medium pt-2 pb-4">
+                            {lang === "id"
+                              ? "Proses produksi memakan waktu berbulan-bulan, memastikan setiap detail frekuensi menyatu dengan sempurna untuk memberikan pengalaman audio spasial yang tak terlupakan."
+                              : "The production process took months, ensuring every detail of frequencies blended perfectly to provide an unforgettable spatial audio experience."}
                           </p>
                         </div>
                       </div>
@@ -1214,26 +1291,31 @@ export default function Discography({
                   </div>
                 </div>
               </div>
+
+              {/* --- TOMBOL NEXT/PREV BESAR (DIMATIKAN SAAT LAGU PLAYING AGAR TIDAK MENGHALANGI LIRIK) --- */}
               <div
                 className={`fixed inset-0 z-50 pointer-events-none transition-all duration-500 ${isExpanded && !isPlaying ? "opacity-100" : "opacity-0"}`}
               >
                 <button
                   onClick={(e) => handleNavigate("prev", e)}
-                  className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 p-6 pointer-events-auto hover:scale-110 transition-transform"
+                  // Menambahkan logika: jika isPlaying, jadikan pointer-events-none
+                  className={`absolute left-4 md:left-8 top-1/2 -translate-y-1/2 p-6 hover:scale-110 transition-transform ${isExpanded && !isPlaying ? "pointer-events-auto" : "pointer-events-none"}`}
                   style={{ color: currentImg.textColor }}
                 >
                   <ChevronLeft size={64} strokeWidth={1} />
                 </button>
                 <button
                   onClick={(e) => handleNavigate("next", e)}
-                  className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 p-6 pointer-events-auto hover:scale-110 transition-transform"
+                  // Menambahkan logika: jika isPlaying, jadikan pointer-events-none
+                  className={`absolute right-4 md:right-8 top-1/2 -translate-y-1/2 p-6 hover:scale-110 transition-transform ${isExpanded && !isPlaying ? "pointer-events-auto" : "pointer-events-none"}`}
                   style={{ color: currentImg.textColor }}
                 >
                   <ChevronRight size={64} strokeWidth={1} />
                 </button>
               </div>
+
               <div
-                className={`fixed bottom-12 left-1/2 -translate-x-1/2 z-50 transition-all duration-700 delay-500 ${isExpanded && !isPlaying ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+                className={`fixed bottom-12 left-1/2 -translate-x-1/2 z-40 transition-all duration-700 delay-500 ${isExpanded && !isPlaying ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
               >
                 <button
                   onClick={handlePlay}
@@ -1276,7 +1358,7 @@ export default function Discography({
                 activeItem && isTargetPlaceholder
                   ? "opacity-0"
                   : isExpanded
-                    ? "opacity-30 blur-[2px] grayscale"
+                    ? "opacity-20 grayscale" // <-- Blur dihilangkan agar super ringan
                     : "opacity-100 grayscale hover:grayscale-0";
 
               const transitionStyle = activeItem
