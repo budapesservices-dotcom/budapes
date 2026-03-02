@@ -54,12 +54,27 @@ export default function TiltedCard({
 
   const [lastY, setLastY] = useState(0);
 
-  function handleMouse(e: React.MouseEvent<HTMLElement>) {
+  // Fungsi ini sekarang menangani Mouse (Desktop) DAN Touch (Mobile)
+  function handleInteractionMove(
+    e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>,
+  ) {
     if (!ref.current) return;
 
     const rect = ref.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left - rect.width / 2;
-    const offsetY = e.clientY - rect.top - rect.height / 2;
+    let clientX = 0;
+    let clientY = 0;
+
+    // Deteksi apakah ini sentuhan jari atau kursor mouse
+    if ("touches" in e) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+
+    const offsetX = clientX - rect.left - rect.width / 2;
+    const offsetY = clientY - rect.top - rect.height / 2;
 
     const rotationX = (offsetY / (rect.height / 2)) * -rotateAmplitude;
     const rotationY = (offsetX / (rect.width / 2)) * rotateAmplitude;
@@ -67,20 +82,20 @@ export default function TiltedCard({
     rotateX.set(rotationX);
     rotateY.set(rotationY);
 
-    x.set(e.clientX - rect.left);
-    y.set(e.clientY - rect.top);
+    x.set(clientX - rect.left);
+    y.set(clientY - rect.top);
 
     const velocityY = offsetY - lastY;
     rotateFigcaption.set(-velocityY * 0.6);
     setLastY(offsetY);
   }
 
-  function handleMouseEnter() {
+  function handleInteractionStart() {
     scale.set(scaleOnHover);
     opacity.set(1);
   }
 
-  function handleMouseLeave() {
+  function handleInteractionEnd() {
     opacity.set(0);
     scale.set(1);
     rotateX.set(0);
@@ -91,14 +106,20 @@ export default function TiltedCard({
   return (
     <figure
       ref={ref}
-      className="relative w-full h-full [perspective:800px] flex flex-col items-center justify-center"
+      // Tambahkan touch-action-none agar layar tidak ikut scroll saat kartu diusap
+      className="relative w-full h-full [perspective:800px] flex flex-col items-center justify-center touch-action-none"
       style={{
         height: containerHeight,
         width: containerWidth,
       }}
-      onMouseMove={handleMouse}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      // Event Desktop
+      onMouseMove={handleInteractionMove}
+      onMouseEnter={handleInteractionStart}
+      onMouseLeave={handleInteractionEnd}
+      // Event Mobile
+      onTouchMove={handleInteractionMove}
+      onTouchStart={handleInteractionStart}
+      onTouchEnd={handleInteractionEnd}
     >
       {showMobileWarning && (
         <div className="absolute top-4 text-center text-sm block sm:hidden">
@@ -119,7 +140,7 @@ export default function TiltedCard({
         <motion.img
           src={imageSrc}
           alt={altText}
-          className="absolute top-0 left-0 object-cover rounded-[15px] will-change-transform [transform:translateZ(0)]"
+          className="absolute top-0 left-0 object-cover rounded-[15px] will-change-transform [transform:translateZ(0)] shadow-2xl"
           style={{
             width: imageWidth,
             height: imageHeight,
@@ -127,6 +148,7 @@ export default function TiltedCard({
         />
 
         {displayOverlayContent && overlayContent && (
+          // Efek parallax 30px di sini sekarang akan bekerja sempurna di HP
           <motion.div className="absolute top-0 left-0 z-[2] will-change-transform [transform:translateZ(30px)]">
             {overlayContent}
           </motion.div>

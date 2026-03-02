@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useMotionValue } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  useMotionTemplate,
+} from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -23,25 +30,42 @@ export default function OriginalWork({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // State untuk menyimpan intensitas bass (0-255)
-  const [bassIntensity, setBassIntensity] = useState(0);
+  const audioValueRaw = useMotionValue(0);
 
-  // Referensi Audio & Visualizer
+  const smoothAudio = useSpring(audioValueRaw, {
+    stiffness: 350,
+    damping: 30,
+    mass: 0.8,
+  });
+
+  const vignetteAlpha = useTransform(smoothAudio, [0, 255], [0, 0.4]);
+  const vignetteSize = useTransform(smoothAudio, [0, 255], [100, 0]);
+  const vignetteTemplate = useMotionTemplate`radial-gradient(circle at center, transparent ${vignetteSize}%, rgba(255,255,255,${vignetteAlpha}) 100%)`;
+
+  const cardBounce = useTransform(smoothAudio, [0, 255], [1, 1.08]);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  // State untuk melacak titik awal sentuhan jari
-  const initialTouchRef = useRef<{ x: number; y: number } | null>(null);
-  const dragRotateX = useMotionValue(0);
-  const dragRotateY = useMotionValue(0);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(
+        window.innerWidth <= 768 ||
+          "ontouchstart" in window ||
+          navigator.maxTouchPoints > 0,
+      );
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
-  // Deteksi Mobile
   useEffect(() => {
     if (!isPlaying || !audioRef.current) {
-      setBassIntensity(0);
+      audioValueRaw.set(0);
       if (animationFrameRef.current)
         cancelAnimationFrame(animationFrameRef.current);
       return;
@@ -58,8 +82,8 @@ export default function OriginalWork({
       sourceRef.current.connect(analyserRef.current);
       analyserRef.current.connect(audioContextRef.current.destination);
 
-      // Menggunakan 4096 untuk resolusi frekuensi ~10.7Hz per bin
-      analyserRef.current.fftSize = 4096;
+      analyserRef.current.fftSize = 1024;
+      analyserRef.current.smoothingTimeConstant = 0.1;
     }
 
     const analyser = analyserRef.current!;
@@ -69,22 +93,11 @@ export default function OriginalWork({
     const updateVisualizer = () => {
       analyser.getByteFrequencyData(dataArray);
 
-      // FOKUS NARROW: Hanya mengambil rentang 3 bin (Indeks 8, 9, 10)
-      // Ini mengunci area ~86Hz sampai ~118Hz (pusat 90-100Hz)
-      let targetSum = 0;
-      const targetBins = [7];
-      targetBins.forEach((i) => {
-        targetSum += dataArray[i];
-      });
+      const kickPeak = Math.max(dataArray[1], dataArray[2]);
+      const normalized = kickPeak / 255;
+      const impact = Math.pow(normalized, 4) * 120;
 
-      const averageTarget = targetSum / targetBins.length;
-
-      // SENSITIVITAS & THRESHOLD:
-      // Multiplier dinaikkan ke 1.8 agar lebih "nyentak" (Sensitive)
-      // Threshold 50 agar background tetap polos/hitam jika tidak ada kick yang dominan
-      const sensitiveBass = averageTarget > 70 ? averageTarget * 0.5 : 0;
-
-      setBassIntensity(Math.min(255, sensitiveBass));
+      audioValueRaw.set(impact);
       animationFrameRef.current = requestAnimationFrame(updateVisualizer);
     };
 
@@ -94,9 +107,8 @@ export default function OriginalWork({
       if (animationFrameRef.current)
         cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isPlaying]);
+  }, [isPlaying, audioValueRaw]);
 
-  // Data Portofolio (Path audio 100% UTUH sesuai kodinganmu)
   const works = [
     {
       id: 1,
@@ -167,32 +179,6 @@ export default function OriginalWork({
     en: { back: "Back to Main Menu", title: "ORIGINAL WORKS" },
   }[lang as "id" | "en"];
 
-  // Handle Tilt Mobile
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isMobile) return;
-    const touch = e.touches[0];
-    initialTouchRef.current = { x: touch.clientX, y: touch.clientY };
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isMobile || !initialTouchRef.current) return;
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - initialTouchRef.current.x;
-    const deltaY = touch.clientY - initialTouchRef.current.y;
-    const clampedDeltaX = Math.max(-100, Math.min(100, deltaX));
-    const clampedDeltaY = Math.max(-100, Math.min(100, deltaY));
-    dragRotateY.set((clampedDeltaX / 100) * 25);
-    dragRotateX.set(-(clampedDeltaY / 100) * 25);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isMobile) return;
-    dragRotateX.set(0);
-    dragRotateY.set(0);
-    initialTouchRef.current = null;
-  };
-
-  // Audio Logic
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -206,7 +192,6 @@ export default function OriginalWork({
       if (isPlaying) {
         audioRef.current.pause();
       } else {
-        // Penting: Resume AudioContext karena browser memblokir audio otomatis
         if (audioContextRef.current?.state === "suspended") {
           await audioContextRef.current.resume();
         }
@@ -225,11 +210,10 @@ export default function OriginalWork({
 
   const cardSizeProps = isMobile
     ? {
-        containerHeight: "calc(80vw * 1.1)",
-        containerWidth: "80vw",
-        imageHeight: "calc(80vw * 1.1)",
-        imageWidth: "80vw",
-        className: "max-w-[280px] max-h-[308px]",
+        containerHeight: "260px",
+        containerWidth: "260px",
+        imageHeight: "260px",
+        imageWidth: "260px",
       }
     : {
         containerHeight: "350px",
@@ -239,30 +223,12 @@ export default function OriginalWork({
       };
 
   return (
-    <div
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      className="absolute inset-0 w-full h-[100dvh] bg-black overflow-x-hidden overflow-y-auto z-50 scrollbar-hide flex flex-col items-center"
-    >
-      {/* =========================================
-          RADIAL BACKGROUND (BASS REACTIVE)
-          ========================================= */}
-      <div
-        className="fixed inset-0 pointer-events-none transition-opacity duration-700"
+    <div className="absolute inset-0 w-full h-[100dvh] bg-black overflow-x-hidden overflow-y-auto z-50 scrollbar-hide flex flex-col items-center">
+      <motion.div
+        className="fixed inset-0 pointer-events-none z-40 transition-opacity duration-700"
         style={{
           opacity: isPlaying ? 1 : 0,
-          background: `radial-gradient(circle at center, rgba(255,255,255,${(bassIntensity / 255) * 0.2}) 0%, transparent ${40 + (bassIntensity / 255) * 40}%)`,
-        }}
-      />
-      <motion.div
-        className="fixed inset-0 pointer-events-none"
-        animate={{
-          scale: 1 + (bassIntensity / 255) * 0.3,
-        }}
-        transition={{ type: "spring", stiffness: 100, damping: 10 }}
-        style={{
-          background: `radial-gradient(circle at center, rgba(255,255,255,${(bassIntensity / 255) * 0.1}) 0%, transparent 70%)`,
+          background: vignetteTemplate,
         }}
       />
 
@@ -273,7 +239,6 @@ export default function OriginalWork({
       />
 
       <div className="min-h-full w-full flex flex-col text-white pb-4 z-10">
-        {/* HEADER */}
         <div className="w-full pt-20 md:pt-24 pb-2 px-8 md:px-20 shrink-0">
           <h2 className="text-4xl md:text-6xl font-display font-black uppercase tracking-tighter text-white leading-none">
             {t.title}
@@ -281,7 +246,6 @@ export default function OriginalWork({
           <div className="w-12 h-1 bg-white mt-4" />
         </div>
 
-        {/* SLIDER AREA */}
         <div className="flex-1 w-full max-w-4xl mx-auto flex items-center justify-center relative px-6 py-4 shrink-0 z-0">
           <div className="absolute left-2 md:-left-12 z-20">
             <AnimatePresence>
@@ -311,9 +275,7 @@ export default function OriginalWork({
                 exit={{ opacity: 0, scale: 0.95, x: -50 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
                 style={{
-                  rotateX: isMobile ? dragRotateX : 0,
-                  rotateY: isMobile ? dragRotateY : 0,
-                  transformStyle: "preserve-3d",
+                  scale: cardBounce,
                 }}
                 className="w-full flex flex-col items-center gap-4 md:gap-6 pointer-events-auto"
               >
@@ -322,16 +284,19 @@ export default function OriginalWork({
                   altText={works[currentIndex].title}
                   captionText={works[currentIndex].title}
                   {...cardSizeProps}
-                  rotateAmplitude={isMobile ? 0 : 15}
+                  // === KEMIRINGAN DILIPATGANDAKAN DI MOBILE AGAR SENSITIF ===
+                  rotateAmplitude={isMobile ? 25 : 15}
                   scaleOnHover={1.05}
                   showMobileWarning={false}
                   showTooltip={false}
                   displayOverlayContent={true}
                   overlayContent={
-                    <div className="flex items-center justify-center w-full h-full bg-black/50 p-4">
-                      <p className="text-white font-black text-xl text-center uppercase tracking-tighter shadow-black drop-shadow-md">
-                        {works[currentIndex].title}
-                      </p>
+                    <div className="absolute top-0 left-0 w-full h-full p-3 md:p-4 flex items-start justify-start pointer-events-none">
+                      <div className="bg-black/60 backdrop-blur-md rounded-xl px-3 py-1.5 md:px-4 md:py-2 border border-white/20 shadow-lg">
+                        <p className="text-white font-black text-[10px] md:text-sm text-left uppercase tracking-tighter drop-shadow-md">
+                          {works[currentIndex].title}
+                        </p>
+                      </div>
                     </div>
                   }
                 />
@@ -368,8 +333,7 @@ export default function OriginalWork({
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="w-full shrink-0 flex flex-col items-center mt-auto pt-2">
+        <div className="w-full shrink-0 flex flex-col items-center mt-auto pt-2 z-50">
           <div className="mt-0 mb-4 pointer-events-auto shrink-0 z-10 flex items-center gap-6 md:gap-10">
             <button
               onClick={skipBackward}
@@ -427,6 +391,7 @@ export default function OriginalWork({
         .font-display { font-family: 'Oswald', sans-serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .touch-action-none { touch-action: none; } 
       `}</style>
     </div>
   );
