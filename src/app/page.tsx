@@ -13,7 +13,7 @@ import {
 } from "framer-motion";
 import { MoveRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import SharedLoading from "../lib/SharedLoading";
+import SharedLoading from "../lib/page/loading/SharedLoading";
 
 // Data Konten
 const content: Record<string, any> = {

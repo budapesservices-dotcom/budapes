@@ -17,7 +17,7 @@ import {
   Rewind,
   FastForward,
 } from "lucide-react";
-import TiltedCard from "./tiltedcard";
+import TiltedCard from "../../../../components/card/tiltedcard";
 
 export default function OriginalWork({
   lang,
@@ -118,10 +118,10 @@ export default function OriginalWork({
       title: "Samidare (cover)",
       imageSrc: "/samidare.jpeg", // Fallback (jika gagal load)
       imageLayers: [
-        "/samidare/1.png", // Paling Belakang (Background)
-        "/samidare/2.png", // Tengah
-        "/samidare/3.png", // Depan
-        "/samidare/4.png", // Paling Depan
+        "/portfolio/original/samidare/1.png", // Paling Belakang (Background)
+        "/portfolio/original/samidare/2.png", // Tengah
+        "/portfolio/original/samidare/3.png", // Depan
+        "/portfolio/original/samidare/4.png", // Paling Depan
       ],
       audioSrc: "/samidare.flac",
       category:
@@ -134,9 +134,11 @@ export default function OriginalWork({
     {
       id: 2,
       title: "We Wish You A Merry Christmas (cover)",
-      imageSrc: "/we-wish-you-a-merry-christmas.jpeg", // Karena belum dipotong, dia pakai imageSrc tunggal
+      imageSrc:
+        "/portfolio/original/we-wish-you-a-merry-christmas/we-wish-you-a-merry-christmas.jpeg",
       imageLayers: [],
-      audioSrc: "/we-wish-you-a-merry-christmas.mp3",
+      audioSrc:
+        "/portfolio/original/we-wish-you-a-merry-christmas/we-wish-you-a-merry-christmas.mp3",
       category:
         lang === "id" ? "Aransemen & Komposisi" : "Arrangement & Composition",
       desc:
@@ -147,9 +149,9 @@ export default function OriginalWork({
     {
       id: 3,
       title: "Fatality",
-      imageSrc: "/fatality.jpeg",
+      imageSrc: "/portfolio/original/fatality/fatality.jpeg",
       imageLayers: [],
-      audioSrc: "/fatality.wav",
+      audioSrc: "/portfolio/original/fatality/fatality.wav",
       category:
         lang === "id"
           ? "Aransemen & Desain Suara"
@@ -162,9 +164,10 @@ export default function OriginalWork({
     {
       id: 4,
       title: "The Seeds of Your Sorrow - Splitting Ibex",
-      imageSrc: "/budapeslogo.png",
+      imageSrc: "/portfolio/original/other/budapeslogo.png",
       imageLayers: [],
-      audioSrc: "/the-seeds-of-your-sorrow-splitting-ibex.wav",
+      audioSrc:
+        "/portfolio/original/the-seeds-of-your-sorrow/the-seeds-of-your-sorrow-splitting-ibex.wav",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
       desc:
@@ -175,9 +178,9 @@ export default function OriginalWork({
     {
       id: 5,
       title: "Home - Avec",
-      imageSrc: "/budapeslogo.png",
+      imageSrc: "/portfolio/original/other/budapeslogo.png",
       imageLayers: [],
-      audioSrc: "/home-avec.flac",
+      audioSrc: "/portfolio/original/home/home-avec.flac",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
       desc:

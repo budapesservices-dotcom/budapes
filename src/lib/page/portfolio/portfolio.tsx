@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoveRight } from "lucide-react";
-import OriginalWork from "./originalwork";
+import OriginalWork from "./original/originalwork";
 
 export default function Portfolio({
   onClose,
@@ -262,13 +262,13 @@ export default function Portfolio({
             "original",
             t.original,
             t.originalSub,
-            "/originalworkintro.mp4",
+            "/portfolio/original/other/originalworkintro.mp4",
           )}
           {renderSection(
             "client",
             t.client,
             t.clientSub,
-            "/clientworkintro.mp4",
+            "/portfolio/client/other/clientworkintro.mp4",
           )}
         </div>
       )}

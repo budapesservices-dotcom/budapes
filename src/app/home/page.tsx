@@ -9,10 +9,10 @@ import React, {
 } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
-import ColorBends from "@/components/colorbends";
-import Discography from "@/components/discography";
-import Portfolio from "@/components/portfolio"; // <-- 1. IMPORT PORTFOLIO DI SINI
-import SharedLoading from "@/lib/SharedLoading";
+import ColorBends from "@/components/background/colorbends";
+import Discography from "@/lib/page/discography/discography";
+import Portfolio from "@/lib/page/portfolio/portfolio"; // <-- 1. IMPORT PORTFOLIO DI SINI
+import SharedLoading from "@/lib/page/loading/SharedLoading";
 
 // Memoized NavItem
 const NavItem = React.memo(function NavItem({
@@ -280,7 +280,7 @@ export default function App() {
           `}
         >
           <video
-            src="/logo-transparan.webm"
+            src="/other/budapes-logo/logo-transparan.webm"
             autoPlay
             loop
             muted
