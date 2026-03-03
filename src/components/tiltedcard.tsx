@@ -3,7 +3,8 @@ import { useRef, useState } from "react";
 import { motion, useMotionValue, useSpring } from "motion/react";
 
 interface TiltedCardProps {
-  imageSrc: React.ComponentProps<"img">["src"];
+  imageSrc?: string; // Sekarang opsional (untuk fallback)
+  imageLayers?: string[]; // PROPERTI BARU: Untuk menampung potongan layer 1 - 4
   altText?: string;
   captionText?: string;
   containerHeight?: React.CSSProperties["height"];
@@ -19,13 +20,14 @@ interface TiltedCardProps {
 }
 
 const springValues: SpringOptions = {
-  damping: 30,
-  stiffness: 100,
-  mass: 2,
+  damping: 20,
+  stiffness: 300,
+  mass: 0.5,
 };
 
 export default function TiltedCard({
   imageSrc,
+  imageLayers = [], // Default kosong
   altText = "Tilted card image",
   captionText = "",
   containerHeight = "300px",
@@ -46,15 +48,15 @@ export default function TiltedCard({
   const rotateY = useSpring(useMotionValue(0), springValues);
   const scale = useSpring(1, springValues);
   const opacity = useSpring(0);
+
   const rotateFigcaption = useSpring(0, {
-    stiffness: 350,
-    damping: 30,
-    mass: 1,
+    stiffness: 400,
+    damping: 25,
+    mass: 0.5,
   });
 
   const [lastY, setLastY] = useState(0);
 
-  // Fungsi ini sekarang menangani Mouse (Desktop) DAN Touch (Mobile)
   function handleInteractionMove(
     e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>,
   ) {
@@ -64,7 +66,6 @@ export default function TiltedCard({
     let clientX = 0;
     let clientY = 0;
 
-    // Deteksi apakah ini sentuhan jari atau kursor mouse
     if ("touches" in e) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
@@ -106,17 +107,14 @@ export default function TiltedCard({
   return (
     <figure
       ref={ref}
-      // Tambahkan touch-action-none agar layar tidak ikut scroll saat kartu diusap
-      className="relative w-full h-full [perspective:800px] flex flex-col items-center justify-center touch-action-none"
+      className="relative w-full h-full [perspective:1000px] flex flex-col items-center justify-center touch-action-none"
       style={{
         height: containerHeight,
         width: containerWidth,
       }}
-      // Event Desktop
       onMouseMove={handleInteractionMove}
       onMouseEnter={handleInteractionStart}
       onMouseLeave={handleInteractionEnd}
-      // Event Mobile
       onTouchMove={handleInteractionMove}
       onTouchStart={handleInteractionStart}
       onTouchEnd={handleInteractionEnd}
@@ -137,19 +135,47 @@ export default function TiltedCard({
           scale,
         }}
       >
-        <motion.img
-          src={imageSrc}
-          alt={altText}
-          className="absolute top-0 left-0 object-cover rounded-[15px] will-change-transform [transform:translateZ(0)] shadow-2xl"
-          style={{
-            width: imageWidth,
-            height: imageHeight,
-          }}
-        />
+        {/* LOGIKA LAYER PARALLAX */}
+        {imageLayers.length > 0
+          ? imageLayers.map((layer, index) => {
+              // Layer 1 (index 0) = 0px (paling belakang)
+              // Layer 2 (index 1) = 25px
+              // Layer 3 (index 2) = 50px
+              // Layer 4 (index 3) = 75px (paling depan)
+              const depth = index * 25;
+              return (
+                <motion.img
+                  key={index}
+                  src={layer}
+                  alt={`${altText} Layer ${index + 1}`}
+                  className={`absolute top-0 left-0 object-cover rounded-[15px] will-change-transform ${index === 0 ? "shadow-2xl" : ""}`}
+                  style={{
+                    width: imageWidth,
+                    height: imageHeight,
+                    transform: `translateZ(${depth}px)`,
+                  }}
+                />
+              );
+            })
+          : // Jika belum dipotong-potong, tampilkan gambar tunggal biasa
+            imageSrc && (
+              <motion.img
+                src={imageSrc}
+                alt={altText}
+                className="absolute top-0 left-0 object-cover rounded-[15px] will-change-transform [transform:translateZ(0)] shadow-2xl"
+                style={{
+                  width: imageWidth,
+                  height: imageHeight,
+                }}
+              />
+            )}
 
+        {/* Label Judul didorong ke Z:120px agar tidak tertusuk oleh Layer 4 yang ada di 75px */}
         {displayOverlayContent && overlayContent && (
-          // Efek parallax 30px di sini sekarang akan bekerja sempurna di HP
-          <motion.div className="absolute top-0 left-0 z-[2] will-change-transform [transform:translateZ(30px)]">
+          <motion.div
+            className="absolute top-0 left-0 z-[2] will-change-transform"
+            style={{ transform: "translateZ(120px)" }}
+          >
             {overlayContent}
           </motion.div>
         )}

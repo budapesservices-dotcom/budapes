@@ -109,11 +109,20 @@ export default function OriginalWork({
     };
   }, [isPlaying, audioValueRaw]);
 
+  // =========================================
+  // DATA PORTOFOLIO DENGAN DUKUNGAN MULTI-LAYER
+  // =========================================
   const works = [
     {
       id: 1,
       title: "Samidare (cover)",
-      image: "/samidare.jpeg",
+      imageSrc: "/samidare.jpeg", // Fallback (jika gagal load)
+      imageLayers: [
+        "/samidare/1.png", // Paling Belakang (Background)
+        "/samidare/2.png", // Tengah
+        "/samidare/3.png", // Depan
+        "/samidare/4.png", // Paling Depan
+      ],
       audioSrc: "/samidare.flac",
       category:
         lang === "id" ? "Aransemen & Komposisi" : "Arrangement & Composition",
@@ -125,7 +134,8 @@ export default function OriginalWork({
     {
       id: 2,
       title: "We Wish You A Merry Christmas (cover)",
-      image: "/we-wish-you-a-merry-christmas.jpeg",
+      imageSrc: "/we-wish-you-a-merry-christmas.jpeg", // Karena belum dipotong, dia pakai imageSrc tunggal
+      imageLayers: [],
       audioSrc: "/we-wish-you-a-merry-christmas.mp3",
       category:
         lang === "id" ? "Aransemen & Komposisi" : "Arrangement & Composition",
@@ -137,7 +147,8 @@ export default function OriginalWork({
     {
       id: 3,
       title: "Fatality",
-      image: "/fatality.jpeg",
+      imageSrc: "/fatality.jpeg",
+      imageLayers: [],
       audioSrc: "/fatality.wav",
       category:
         lang === "id"
@@ -151,7 +162,8 @@ export default function OriginalWork({
     {
       id: 4,
       title: "The Seeds of Your Sorrow - Splitting Ibex",
-      image: "/budapeslogo.png",
+      imageSrc: "/budapeslogo.png",
+      imageLayers: [],
       audioSrc: "/the-seeds-of-your-sorrow-splitting-ibex.wav",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
@@ -163,7 +175,8 @@ export default function OriginalWork({
     {
       id: 5,
       title: "Home - Avec",
-      image: "/budapeslogo.png",
+      imageSrc: "/budapeslogo.png",
+      imageLayers: [],
       audioSrc: "/home-avec.flac",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
@@ -280,11 +293,12 @@ export default function OriginalWork({
                 className="w-full flex flex-col items-center gap-4 md:gap-6 pointer-events-auto"
               >
                 <TiltedCard
-                  imageSrc={works[currentIndex].image}
+                  // Masukkan imageSrc biasa & array imageLayers ke dalam komponen
+                  imageSrc={works[currentIndex].imageSrc}
+                  imageLayers={works[currentIndex].imageLayers}
                   altText={works[currentIndex].title}
                   captionText={works[currentIndex].title}
                   {...cardSizeProps}
-                  // === KEMIRINGAN DILIPATGANDAKAN DI MOBILE AGAR SENSITIF ===
                   rotateAmplitude={isMobile ? 25 : 15}
                   scaleOnHover={1.05}
                   showMobileWarning={false}
