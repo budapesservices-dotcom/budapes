@@ -123,7 +123,7 @@ export default function OriginalWork({
         "/portfolio/original/samidare/3.png", // Depan
         "/portfolio/original/samidare/4.png", // Paling Depan
       ],
-      audioSrc: "/samidare.flac",
+      audioSrc: "/portfolio/original/samidare/samidare.wav",
       category:
         lang === "id" ? "Aransemen & Komposisi" : "Arrangement & Composition",
       desc:
@@ -136,7 +136,12 @@ export default function OriginalWork({
       title: "We Wish You A Merry Christmas (cover)",
       imageSrc:
         "/portfolio/original/we-wish-you-a-merry-christmas/we-wish-you-a-merry-christmas.jpeg",
-      imageLayers: [],
+      imageLayers: [
+        "/portfolio/original/we-wish-you-a-merry-christmas/1.png", // Paling Belakang (Background)
+        "/portfolio/original/we-wish-you-a-merry-christmas/2.png", // Tengah
+        "/portfolio/original/we-wish-you-a-merry-christmas/3.png", // Depan
+        "/portfolio/original/we-wish-you-a-merry-christmas/4.png", // Paling Depan
+      ],
       audioSrc:
         "/portfolio/original/we-wish-you-a-merry-christmas/we-wish-you-a-merry-christmas.mp3",
       category:
@@ -164,7 +169,7 @@ export default function OriginalWork({
     {
       id: 4,
       title: "The Seeds of Your Sorrow - Splitting Ibex",
-      imageSrc: "/portfolio/original/other/budapeslogo.png",
+      imageSrc: "/other/budapes-logo/logo/budapeslogo.png",
       imageLayers: [],
       audioSrc:
         "/portfolio/original/the-seeds-of-your-sorrow/the-seeds-of-your-sorrow-splitting-ibex.wav",
@@ -178,7 +183,7 @@ export default function OriginalWork({
     {
       id: 5,
       title: "Home - Avec",
-      imageSrc: "/portfolio/original/other/budapeslogo.png",
+      imageSrc: "/other/budapes-logo/logo/budapeslogo.png",
       imageLayers: [],
       audioSrc: "/portfolio/original/home/home-avec.flac",
       category:

@@ -10,7 +10,7 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import { MoveRight, ArrowLeft } from "lucide-react"; // Pastikan install lucide-react
-import SharedLoading from "@/lib/loading/SharedLoading"; // Sesuaikan path jika perlu
+import SharedLoading from "@/lib/page/loading/SharedLoading"; // Sesuaikan path jika perlu
 import styles from "./not-found.module.css";
 
 const content = {
