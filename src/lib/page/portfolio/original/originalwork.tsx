@@ -88,9 +88,14 @@ export default function OriginalWork({
       id: 3,
       title: "Fatality",
       imageSrc: "/portfolio/original/fatality/fatality.jpeg",
-      imageLayers: [],
-      videoSrcDesktop: "/portfolio/original/fatality/desktop.webm",
-      videoSrcMobile: "/portfolio/original/fatality/mobile.webm",
+      imageLayers: [
+        "/portfolio/original/fatality/1.png",
+        "/portfolio/original/fatality/2.png",
+        "/portfolio/original/fatality/3.png",
+        "/portfolio/original/fatality/4.png",
+      ],
+      videoSrcDesktop: "/portfolio/original/fatality/desktop.mp4",
+      videoSrcMobile: "/portfolio/original/fatality/mobile.mp4",
       category:
         lang === "id"
           ? "Aransemen & Desain Suara"
