@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  motion,
-  AnimatePresence,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  useMotionTemplate,
-} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -30,25 +23,8 @@ export default function OriginalWork({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const audioValueRaw = useMotionValue(0);
-
-  const smoothAudio = useSpring(audioValueRaw, {
-    stiffness: 350,
-    damping: 30,
-    mass: 0.8,
-  });
-
-  const vignetteAlpha = useTransform(smoothAudio, [0, 255], [0, 0.4]);
-  const vignetteSize = useTransform(smoothAudio, [0, 255], [100, 0]);
-  const vignetteTemplate = useMotionTemplate`radial-gradient(circle at center, transparent ${vignetteSize}%, rgba(255,255,255,${vignetteAlpha}) 100%)`;
-
-  const cardBounce = useTransform(smoothAudio, [0, 255], [1, 1.08]);
-
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  // PERBAIKAN: Mengubah nama dan tipe menjadi HTMLVideoElement
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -63,67 +39,22 @@ export default function OriginalWork({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  useEffect(() => {
-    if (!isPlaying || !audioRef.current) {
-      audioValueRaw.set(0);
-      if (animationFrameRef.current)
-        cancelAnimationFrame(animationFrameRef.current);
-      return;
-    }
-
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (
-        window.AudioContext || (window as any).webkitAudioContext
-      )();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      sourceRef.current = audioContextRef.current.createMediaElementSource(
-        audioRef.current,
-      );
-      sourceRef.current.connect(analyserRef.current);
-      analyserRef.current.connect(audioContextRef.current.destination);
-
-      analyserRef.current.fftSize = 1024;
-      analyserRef.current.smoothingTimeConstant = 0.1;
-    }
-
-    const analyser = analyserRef.current!;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const updateVisualizer = () => {
-      analyser.getByteFrequencyData(dataArray);
-
-      const kickPeak = Math.max(dataArray[1], dataArray[2]);
-      const normalized = kickPeak / 255;
-      const impact = Math.pow(normalized, 4) * 120;
-
-      audioValueRaw.set(impact);
-      animationFrameRef.current = requestAnimationFrame(updateVisualizer);
-    };
-
-    updateVisualizer();
-
-    return () => {
-      if (animationFrameRef.current)
-        cancelAnimationFrame(animationFrameRef.current);
-    };
-  }, [isPlaying, audioValueRaw]);
-
   // =========================================
-  // DATA PORTOFOLIO DENGAN DUKUNGAN MULTI-LAYER
+  // DATA PORTOFOLIO
   // =========================================
   const works = [
     {
       id: 1,
       title: "Samidare (cover)",
-      imageSrc: "/samidare.jpeg", // Fallback (jika gagal load)
+      imageSrc: "/samidare.jpeg",
       imageLayers: [
-        "/portfolio/original/samidare/1.png", // Paling Belakang (Background)
-        "/portfolio/original/samidare/2.png", // Tengah
-        "/portfolio/original/samidare/3.png", // Depan
-        "/portfolio/original/samidare/4.png", // Paling Depan
+        "/portfolio/original/samidare/1.png",
+        "/portfolio/original/samidare/2.png",
+        "/portfolio/original/samidare/3.png",
+        "/portfolio/original/samidare/4.png",
       ],
-      audioSrc: "/portfolio/original/samidare/samidare.wav",
+      videoSrcDesktop: "/portfolio/original/samidare/desktop.webm",
+      videoSrcMobile: "/portfolio/original/samidare/mobile.webm",
       category:
         lang === "id" ? "Aransemen & Komposisi" : "Arrangement & Composition",
       desc:
@@ -137,13 +68,15 @@ export default function OriginalWork({
       imageSrc:
         "/portfolio/original/we-wish-you-a-merry-christmas/we-wish-you-a-merry-christmas.jpeg",
       imageLayers: [
-        "/portfolio/original/we-wish-you-a-merry-christmas/1.png", // Paling Belakang (Background)
-        "/portfolio/original/we-wish-you-a-merry-christmas/2.png", // Tengah
-        "/portfolio/original/we-wish-you-a-merry-christmas/3.png", // Depan
-        "/portfolio/original/we-wish-you-a-merry-christmas/4.png", // Paling Depan
+        "/portfolio/original/we-wish-you-a-merry-christmas/1.png",
+        "/portfolio/original/we-wish-you-a-merry-christmas/2.png",
+        "/portfolio/original/we-wish-you-a-merry-christmas/3.png",
+        "/portfolio/original/we-wish-you-a-merry-christmas/4.png",
       ],
-      audioSrc:
-        "/portfolio/original/we-wish-you-a-merry-christmas/we-wish-you-a-merry-christmas.mp3",
+      videoSrcDesktop:
+        "/portfolio/original/we-wish-you-a-merry-christmas/desktop.webm",
+      videoSrcMobile:
+        "/portfolio/original/we-wish-you-a-merry-christmas/mobile.webm",
       category:
         lang === "id" ? "Aransemen & Komposisi" : "Arrangement & Composition",
       desc:
@@ -156,7 +89,8 @@ export default function OriginalWork({
       title: "Fatality",
       imageSrc: "/portfolio/original/fatality/fatality.jpeg",
       imageLayers: [],
-      audioSrc: "/portfolio/original/fatality/fatality.wav",
+      videoSrcDesktop: "/portfolio/original/fatality/desktop.webm",
+      videoSrcMobile: "/portfolio/original/fatality/mobile.webm",
       category:
         lang === "id"
           ? "Aransemen & Desain Suara"
@@ -171,8 +105,10 @@ export default function OriginalWork({
       title: "The Seeds of Your Sorrow - Splitting Ibex",
       imageSrc: "/other/budapes-logo/logo/budapeslogo.png",
       imageLayers: [],
-      audioSrc:
-        "/portfolio/original/the-seeds-of-your-sorrow/the-seeds-of-your-sorrow-splitting-ibex.wav",
+      videoSrcDesktop:
+        "/portfolio/original/the-seeds-of-your-sorrow/desktop.webm",
+      videoSrcMobile:
+        "/portfolio/original/the-seeds-of-your-sorrow/mobile.webm",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
       desc:
@@ -185,7 +121,8 @@ export default function OriginalWork({
       title: "Home - Avec",
       imageSrc: "/other/budapes-logo/logo/budapeslogo.png",
       imageLayers: [],
-      audioSrc: "/portfolio/original/home/home-avec.flac",
+      videoSrcDesktop: "/portfolio/original/home/desktop.webm",
+      videoSrcMobile: "/portfolio/original/home/mobile.webm",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
       desc:
@@ -200,74 +137,87 @@ export default function OriginalWork({
     en: { back: "Back to Main Menu", title: "ORIGINAL WORKS" },
   }[lang as "id" | "en"];
 
+  // PERBAIKAN: Menggunakan videoRef
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
     }
     setIsPlaying(false);
   }, [currentIndex]);
 
-  const togglePlay = async () => {
-    if (audioRef.current) {
+  const togglePlay = () => {
+    if (videoRef.current) {
       if (isPlaying) {
-        audioRef.current.pause();
+        videoRef.current.pause();
       } else {
-        if (audioContextRef.current?.state === "suspended") {
-          await audioContextRef.current.resume();
-        }
-        audioRef.current.play();
+        videoRef.current.play();
       }
       setIsPlaying(!isPlaying);
     }
   };
 
   const skipBackward = () => {
-    if (audioRef.current) audioRef.current.currentTime -= 5;
+    if (videoRef.current) videoRef.current.currentTime -= 5;
   };
   const skipForward = () => {
-    if (audioRef.current) audioRef.current.currentTime += 5;
+    if (videoRef.current) videoRef.current.currentTime += 5;
   };
 
   const cardSizeProps = isMobile
     ? {
-        containerHeight: "260px",
-        containerWidth: "260px",
-        imageHeight: "260px",
-        imageWidth: "260px",
+        containerHeight: "clamp(150px, 35vh, 220px)",
+        containerWidth: "clamp(150px, 35vh, 220px)",
+        imageHeight: "clamp(150px, 35vh, 220px)",
+        imageWidth: "clamp(150px, 35vh, 220px)",
       }
     : {
-        containerHeight: "350px",
-        containerWidth: "350px",
-        imageHeight: "350px",
-        imageWidth: "350px",
+        containerHeight: "clamp(150px, 35vh, 280px)",
+        containerWidth: "clamp(150px, 35vh, 280px)",
+        imageHeight: "clamp(150px, 35vh, 280px)",
+        imageWidth: "clamp(150px, 35vh, 280px)",
       };
 
   return (
-    <div className="absolute inset-0 w-full h-[100dvh] bg-black overflow-x-hidden overflow-y-auto z-50 scrollbar-hide flex flex-col items-center">
-      <motion.div
-        className="fixed inset-0 pointer-events-none z-40 transition-opacity duration-700"
-        style={{
-          opacity: isPlaying ? 1 : 0,
-          background: vignetteTemplate,
-        }}
-      />
+    <div className="absolute inset-0 w-full h-[100dvh] bg-black overflow-hidden z-50 flex flex-col">
+      {/* =========================================
+          LAYER 0: BACKGROUND VIDEO (GPU OPTIMIZED)
+          ========================================= */}
+      <div
+        className="absolute inset-0 w-full h-full z-0 pointer-events-none bg-black"
+        style={{ transform: "translateZ(0)" }}
+      >
+        <video
+          ref={videoRef} // PERBAIKAN: Ref ini sekarang sinkron dengan TypeScript
+          key={`${currentIndex}-${isMobile ? "mobile" : "desktop"}`}
+          src={
+            isMobile
+              ? works[currentIndex].videoSrcMobile
+              : works[currentIndex].videoSrcDesktop
+          }
+          preload="auto"
+          playsInline
+          onEnded={() => setIsPlaying(false)}
+          className="absolute inset-0 w-full h-full object-cover opacity-50 will-change-transform"
+        />
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
 
-      <audio
-        ref={audioRef}
-        src={works[currentIndex].audioSrc}
-        onEnded={() => setIsPlaying(false)}
-      />
+      {/* =========================================
+          LAYER 1: HEADER
+          ========================================= */}
+      <div className="w-full pt-6 md:pt-8 pb-4 px-8 md:px-20 shrink-0 bg-gradient-to-b from-black/90 to-transparent relative z-30">
+        <h2 className="text-3xl md:text-5xl font-display font-black uppercase tracking-tighter text-white leading-none drop-shadow-lg">
+          {t.title}
+        </h2>
+        <div className="w-8 md:w-12 h-1 bg-white mt-3 drop-shadow-lg" />
+      </div>
 
-      <div className="min-h-full w-full flex flex-col text-white pb-4 z-10">
-        <div className="w-full pt-20 md:pt-24 pb-2 px-8 md:px-20 shrink-0">
-          <h2 className="text-4xl md:text-6xl font-display font-black uppercase tracking-tighter text-white leading-none">
-            {t.title}
-          </h2>
-          <div className="w-12 h-1 bg-white mt-4" />
-        </div>
-
-        <div className="flex-1 w-full max-w-4xl mx-auto flex items-center justify-center relative px-6 py-4 shrink-0 z-0">
+      {/* =========================================
+          LAYER 2: KARTU TENGAH
+          ========================================= */}
+      <div className="relative flex-1 w-full h-full flex items-center justify-center z-10 min-h-0">
+        <div className="w-full max-w-4xl h-full mx-auto flex items-center justify-center relative px-6 z-20 shrink-0">
           <div className="absolute left-2 md:-left-12 z-20">
             <AnimatePresence>
               {currentIndex > 0 && (
@@ -276,7 +226,7 @@ export default function OriginalWork({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   onClick={() => setCurrentIndex((prev) => prev - 1)}
-                  className="p-3 md:p-4 bg-white text-black rounded-full hover:scale-110 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                  className="p-3 md:p-4 bg-white text-black rounded-full hover:scale-110 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] pointer-events-auto"
                 >
                   <ChevronLeft size={24} className="md:w-8 md:h-8" />
                 </motion.button>
@@ -285,7 +235,7 @@ export default function OriginalWork({
           </div>
 
           <div
-            className="w-full flex flex-col items-center"
+            className="w-full h-full flex flex-col items-center justify-center"
             style={{ perspective: "1000px" }}
           >
             <AnimatePresence mode="wait">
@@ -295,13 +245,9 @@ export default function OriginalWork({
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95, x: -50 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
-                style={{
-                  scale: cardBounce,
-                }}
-                className="w-full flex flex-col items-center gap-4 md:gap-6 pointer-events-auto"
+                className="w-full flex flex-col items-center gap-3 pointer-events-auto"
               >
                 <TiltedCard
-                  // Masukkan imageSrc biasa & array imageLayers ke dalam komponen
                   imageSrc={works[currentIndex].imageSrc}
                   imageLayers={works[currentIndex].imageLayers}
                   altText={works[currentIndex].title}
@@ -313,9 +259,9 @@ export default function OriginalWork({
                   showTooltip={false}
                   displayOverlayContent={true}
                   overlayContent={
-                    <div className="absolute top-0 left-0 w-full h-full p-3 md:p-4 flex items-start justify-start pointer-events-none">
-                      <div className="bg-black/60 backdrop-blur-md rounded-xl px-3 py-1.5 md:px-4 md:py-2 border border-white/20 shadow-lg">
-                        <p className="text-white font-black text-[10px] md:text-sm text-left uppercase tracking-tighter drop-shadow-md">
+                    <div className="absolute top-0 left-0 w-full h-full p-2 md:p-3 flex items-start justify-start pointer-events-none">
+                      <div className="bg-black/60 backdrop-blur-md rounded-xl px-2 py-1 md:px-3 md:py-1.5 border border-white/20 shadow-lg">
+                        <p className="text-white font-black text-[9px] md:text-xs text-left uppercase tracking-tighter drop-shadow-md">
                           {works[currentIndex].title}
                         </p>
                       </div>
@@ -323,14 +269,14 @@ export default function OriginalWork({
                   }
                 />
 
-                <div className="text-center space-y-2 max-w-md px-4 mt-2 shrink-0">
-                  <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.4em]">
+                <div className="text-center space-y-1 max-w-md px-4 shrink-0 mt-1 drop-shadow-lg">
+                  <span className="text-[8px] md:text-[9px] text-zinc-300 font-bold uppercase tracking-[0.4em]">
                     {works[currentIndex].category}
                   </span>
-                  <h3 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white">
+                  <h3 className="text-lg md:text-2xl font-black uppercase tracking-tighter text-white">
                     {works[currentIndex].title}
                   </h3>
-                  <p className="text-xs md:text-sm text-zinc-400 font-medium leading-relaxed">
+                  <p className="text-[10px] md:text-xs text-zinc-300 font-medium leading-snug">
                     {works[currentIndex].desc}
                   </p>
                 </div>
@@ -346,7 +292,7 @@ export default function OriginalWork({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   onClick={() => setCurrentIndex((prev) => prev + 1)}
-                  className="p-3 md:p-4 bg-white text-black rounded-full hover:scale-110 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+                  className="p-3 md:p-4 bg-white text-black rounded-full hover:scale-110 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] pointer-events-auto"
                 >
                   <ChevronRight size={24} className="md:w-8 md:h-8" />
                 </motion.button>
@@ -354,59 +300,62 @@ export default function OriginalWork({
             </AnimatePresence>
           </div>
         </div>
+      </div>
 
-        <div className="w-full shrink-0 flex flex-col items-center mt-auto pt-2 z-50">
-          <div className="mt-0 mb-4 pointer-events-auto shrink-0 z-10 flex items-center gap-6 md:gap-10">
-            <button
-              onClick={skipBackward}
-              className="text-zinc-500 hover:text-white transition-colors active:scale-90"
-            >
-              <Rewind className="w-6 h-6 md:w-8 md:h-8" fill="currentColor" />
-            </button>
-
-            <button
-              onClick={togglePlay}
-              className={`w-14 h-14 md:w-16 md:h-16 rounded-full border-2 transition-all duration-[600ms] flex items-center justify-center shadow-2xl group/play
-                ${isPlaying ? "border-white bg-white text-black scale-110" : "border-white bg-transparent text-white hover:border-black hover:bg-black hover:scale-105"}
-              `}
-            >
-              {isPlaying ? (
-                <Pause className="w-6 h-6 md:w-8 md:h-8" fill="currentColor" />
-              ) : (
-                <Play
-                  className="w-6 h-6 md:w-8 md:h-8 translate-x-0.5"
-                  fill="currentColor"
-                />
-              )}
-            </button>
-
-            <button
-              onClick={skipForward}
-              className="text-zinc-500 hover:text-white transition-colors active:scale-90"
-            >
-              <FastForward
-                className="w-6 h-6 md:w-8 md:h-8"
-                fill="currentColor"
-              />
-            </button>
-          </div>
-
-          <div className="flex gap-2 mb-4">
-            {works.map((_, idx) => (
-              <div
-                key={idx}
-                className={`h-1 transition-all duration-500 ${idx === currentIndex ? "w-8 bg-white" : "w-2 bg-zinc-800"}`}
-              />
-            ))}
-          </div>
+      {/* =========================================
+          LAYER 3: FOOTER
+          ========================================= */}
+      <div className="w-full shrink-0 flex flex-col items-center pt-6 pb-3 md:pb-4 bg-gradient-to-t from-black/90 via-black/70 to-transparent relative z-30">
+        <div className="mt-0 mb-3 pointer-events-auto shrink-0 z-10 flex items-center gap-6 md:gap-10">
+          <button
+            onClick={skipBackward}
+            className="text-zinc-400 hover:text-white transition-colors active:scale-90"
+          >
+            <Rewind className="w-6 h-6 md:w-7 md:h-7" fill="currentColor" />
+          </button>
 
           <button
-            onClick={onBack}
-            className="w-full pt-4 pb-4 md:pb-6 border-t border-zinc-900 text-[10px] font-bold tracking-[0.3em] uppercase text-zinc-500 hover:text-white transition-colors text-center"
+            onClick={togglePlay}
+            className={`w-12 h-12 md:w-14 md:h-14 rounded-full border-2 transition-all duration-[600ms] flex items-center justify-center shadow-2xl group/play
+              ${isPlaying ? "border-white bg-white text-black scale-110" : "border-white bg-transparent text-white hover:border-black hover:bg-black hover:scale-105"}
+            `}
           >
-            {t.back}
+            {isPlaying ? (
+              <Pause className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" />
+            ) : (
+              <Play
+                className="w-5 h-5 md:w-7 md:h-7 translate-x-0.5"
+                fill="currentColor"
+              />
+            )}
+          </button>
+
+          <button
+            onClick={skipForward}
+            className="text-zinc-400 hover:text-white transition-colors active:scale-90"
+          >
+            <FastForward
+              className="w-6 h-6 md:w-7 md:h-7"
+              fill="currentColor"
+            />
           </button>
         </div>
+
+        <div className="flex gap-2 mb-3 pointer-events-auto">
+          {works.map((_, idx) => (
+            <div
+              key={idx}
+              className={`h-1 transition-all duration-500 ${idx === currentIndex ? "w-8 bg-white" : "w-2 bg-zinc-600"}`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={onBack}
+          className="w-full pt-3 pb-2 md:pb-3 border-t border-white/10 text-[9px] font-bold tracking-[0.3em] uppercase text-zinc-400 hover:text-white transition-colors text-center pointer-events-auto"
+        >
+          {t.back}
+        </button>
       </div>
 
       <style>{`
