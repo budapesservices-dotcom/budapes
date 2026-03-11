@@ -295,7 +295,15 @@ export default function Portfolio({
             />
           ) : (
             // Placeholder untuk Karya Klien (nanti kita buat terpisah)
-            <ClientWork lang={lang} onBack={() => setView("menu")} />
+            <ClientWork
+              lang={lang}
+              onBack={() => {
+                setOpenedGallery(null);
+                setExitingSection(null);
+                setHoveredSection(null);
+                setClickedSection(null);
+              }}
+            />
           )}
         </motion.div>
       )}
