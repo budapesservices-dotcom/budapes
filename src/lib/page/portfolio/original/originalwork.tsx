@@ -7,8 +7,8 @@ import {
   ChevronRight,
   Play,
   Pause,
-  Rewind,
-  FastForward,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 import TiltedCard from "../../../../components/card/tiltedcard";
 
@@ -23,7 +23,9 @@ export default function OriginalWork({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // PERBAIKAN: Mengubah nama dan tipe menjadi HTMLVideoElement
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // KITA HANYA MENGGUNAKAN 1 MESIN: VIDEO (Yang sudah ada audionya)
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -111,9 +113,8 @@ export default function OriginalWork({
       imageSrc: "/other/budapes-logo/logo/budapeslogo.png",
       imageLayers: [],
       videoSrcDesktop:
-        "/portfolio/original/the-seeds-of-your-sorrow/desktop.webm",
-      videoSrcMobile:
-        "/portfolio/original/the-seeds-of-your-sorrow/mobile.webm",
+        "/portfolio/original/the-seeds-of-your-sorrow/desktop.mp4",
+      videoSrcMobile: "/portfolio/original/the-seeds-of-your-sorrow/mobile.mp4",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
       desc:
@@ -126,8 +127,8 @@ export default function OriginalWork({
       title: "Home - Avec",
       imageSrc: "/other/budapes-logo/logo/budapeslogo.png",
       imageLayers: [],
-      videoSrcDesktop: "/portfolio/original/home/desktop.webm",
-      videoSrcMobile: "/portfolio/original/home/mobile.webm",
+      videoSrcDesktop: "/portfolio/original/home/desktop.mp4",
+      videoSrcMobile: "/portfolio/original/home/mobile.mp4",
       category:
         lang === "id" ? "Remix & Remastering" : "Remixing & Remastering",
       desc:
@@ -142,16 +143,25 @@ export default function OriginalWork({
     en: { back: "Back to Main Menu", title: "ORIGINAL WORKS" },
   }[lang as "id" | "en"];
 
-  // PERBAIKAN: Menggunakan videoRef
+  // =========================================
+  // RESET LOGIC
+  // =========================================
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
     setIsPlaying(false);
+
+    // PERBAIKAN: Set agar overlay kembali muncul (false) setiap kali lagu diganti!
+    setHasInteracted(false);
   }, [currentIndex]);
 
+  // =========================================
+  // KONTROL MEDIA MURNI PADA 1 VIDEO
+  // =========================================
   const togglePlay = () => {
+    setHasInteracted(true); // Hapus overlay jika tombol play ditekan
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -163,10 +173,20 @@ export default function OriginalWork({
   };
 
   const skipBackward = () => {
-    if (videoRef.current) videoRef.current.currentTime -= 5;
+    setHasInteracted(true); // Hapus overlay jika tombol mundur ditekan
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(
+        0,
+        videoRef.current.currentTime - 5,
+      );
+    }
   };
+
   const skipForward = () => {
-    if (videoRef.current) videoRef.current.currentTime += 5;
+    setHasInteracted(true); // Hapus overlay jika tombol maju ditekan
+    if (videoRef.current) {
+      videoRef.current.currentTime += 5;
+    }
   };
 
   const cardSizeProps = isMobile
@@ -186,14 +206,14 @@ export default function OriginalWork({
   return (
     <div className="absolute inset-0 w-full h-[100dvh] bg-black overflow-hidden z-50 flex flex-col">
       {/* =========================================
-          LAYER 0: BACKGROUND VIDEO (GPU OPTIMIZED)
+          BACKGROUND VIDEO (Sekaligus sebagai pemutar Audio)
           ========================================= */}
       <div
         className="absolute inset-0 w-full h-full z-0 pointer-events-none bg-black"
         style={{ transform: "translateZ(0)" }}
       >
         <video
-          ref={videoRef} // PERBAIKAN: Ref ini sekarang sinkron dengan TypeScript
+          ref={videoRef}
           key={`${currentIndex}-${isMobile ? "mobile" : "desktop"}`}
           src={
             isMobile
@@ -230,7 +250,10 @@ export default function OriginalWork({
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  onClick={() => setCurrentIndex((prev) => prev - 1)}
+                  onClick={() => {
+                    setCurrentIndex((prev) => prev - 1);
+                    // PERBAIKAN: Hapus setHasInteracted(true) dari sini agar overlay tidak hilang!
+                  }}
                   className="p-3 md:p-4 bg-white text-black rounded-full hover:scale-110 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] pointer-events-auto"
                 >
                   <ChevronLeft size={24} className="md:w-8 md:h-8" />
@@ -250,6 +273,8 @@ export default function OriginalWork({
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95, x: -50 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
+                onMouseEnter={() => setHasInteracted(true)}
+                onTouchStart={() => setHasInteracted(true)}
                 className="w-full flex flex-col items-center gap-3 pointer-events-auto"
               >
                 <TiltedCard
@@ -264,13 +289,31 @@ export default function OriginalWork({
                   showTooltip={false}
                   displayOverlayContent={true}
                   overlayContent={
-                    <div className="absolute top-0 left-0 w-full h-full p-2 md:p-3 flex items-start justify-start pointer-events-none">
-                      <div className="bg-black/60 backdrop-blur-md rounded-xl px-2 py-1 md:px-3 md:py-1.5 border border-white/20 shadow-lg">
-                        <p className="text-white font-black text-[9px] md:text-xs text-left uppercase tracking-tighter drop-shadow-md">
-                          {works[currentIndex].title}
-                        </p>
+                    <>
+                      <div className="absolute top-0 left-0 w-full h-full p-2 md:p-3 flex items-start justify-start pointer-events-none z-10">
+                        <div className="bg-black/60 backdrop-blur-md rounded-xl px-2 py-1 md:px-3 md:py-1.5 border border-white/20 shadow-lg">
+                          <p className="text-white font-black text-[9px] md:text-xs text-left uppercase tracking-tighter drop-shadow-md">
+                            {works[currentIndex].title}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+
+                      <AnimatePresence>
+                        {!hasInteracted && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="absolute inset-0 bg-black/70 backdrop-blur-[2px] rounded-[15px] flex items-center justify-center pointer-events-none z-20"
+                          >
+                            <div className="text-white text-[10px] md:text-xs font-bold px-3 py-1.5 md:px-4 md:py-2 uppercase tracking-[0.3em] animate-pulse drop-shadow-2xl border border-white/20 rounded-full bg-black/40">
+                              {isMobile ? "Drag Me" : "Hover Me"}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
                   }
                 />
 
@@ -296,7 +339,10 @@ export default function OriginalWork({
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  onClick={() => setCurrentIndex((prev) => prev + 1)}
+                  onClick={() => {
+                    setCurrentIndex((prev) => prev + 1);
+                    // PERBAIKAN: Hapus setHasInteracted(true) dari sini agar overlay tidak hilang!
+                  }}
                   className="p-3 md:p-4 bg-white text-black rounded-full hover:scale-110 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] pointer-events-auto"
                 >
                   <ChevronRight size={24} className="md:w-8 md:h-8" />
@@ -316,7 +362,7 @@ export default function OriginalWork({
             onClick={skipBackward}
             className="text-zinc-400 hover:text-white transition-colors active:scale-90"
           >
-            <Rewind className="w-6 h-6 md:w-7 md:h-7" fill="currentColor" />
+            <RotateCcw className="w-5 h-5 md:w-6 md:h-6" strokeWidth={2.5} />
           </button>
 
           <button
@@ -339,10 +385,7 @@ export default function OriginalWork({
             onClick={skipForward}
             className="text-zinc-400 hover:text-white transition-colors active:scale-90"
           >
-            <FastForward
-              className="w-6 h-6 md:w-7 md:h-7"
-              fill="currentColor"
-            />
+            <RotateCw className="w-5 h-5 md:w-6 md:h-6" strokeWidth={2.5} />
           </button>
         </div>
 

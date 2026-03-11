@@ -3,8 +3,8 @@ import { useRef, useState } from "react";
 import { motion, useMotionValue, useSpring } from "motion/react";
 
 interface TiltedCardProps {
-  imageSrc?: string; // Sekarang opsional (untuk fallback)
-  imageLayers?: string[]; // PROPERTI BARU: Untuk menampung potongan layer 1 - 4
+  imageSrc?: string;
+  imageLayers?: string[];
   altText?: string;
   captionText?: string;
   containerHeight?: React.CSSProperties["height"];
@@ -27,7 +27,7 @@ const springValues: SpringOptions = {
 
 export default function TiltedCard({
   imageSrc,
-  imageLayers = [], // Default kosong
+  imageLayers = [],
   altText = "Tilted card image",
   captionText = "",
   containerHeight = "300px",
@@ -135,45 +135,35 @@ export default function TiltedCard({
           scale,
         }}
       >
-        {/* LOGIKA LAYER PARALLAX */}
         {imageLayers.length > 0
           ? imageLayers.map((layer, index) => {
-              // Layer 1 (index 0) = 0px (paling belakang)
-              // Layer 2 (index 1) = 25px
-              // Layer 3 (index 2) = 50px
-              // Layer 4 (index 3) = 75px (paling depan)
               const depth = index * 25;
               return (
                 <motion.img
                   key={index}
                   src={layer}
                   alt={`${altText} Layer ${index + 1}`}
-                  className={`absolute top-0 left-0 object-cover rounded-[15px] will-change-transform ${index === 0 ? "shadow-2xl" : ""}`}
+                  // Menambahkan inset-0 w-full h-full agar lapisan gambar pas ukurannya
+                  className={`absolute inset-0 w-full h-full object-cover rounded-[15px] will-change-transform ${index === 0 ? "shadow-2xl" : ""}`}
                   style={{
-                    width: imageWidth,
-                    height: imageHeight,
                     transform: `translateZ(${depth}px)`,
                   }}
                 />
               );
             })
-          : // Jika belum dipotong-potong, tampilkan gambar tunggal biasa
-            imageSrc && (
+          : imageSrc && (
               <motion.img
                 src={imageSrc}
                 alt={altText}
-                className="absolute top-0 left-0 object-cover rounded-[15px] will-change-transform [transform:translateZ(0)] shadow-2xl"
-                style={{
-                  width: imageWidth,
-                  height: imageHeight,
-                }}
+                // Menambahkan inset-0 w-full h-full untuk gambar tunggal
+                className="absolute inset-0 w-full h-full object-cover rounded-[15px] will-change-transform [transform:translateZ(0)] shadow-2xl"
               />
             )}
 
-        {/* Label Judul didorong ke Z:120px agar tidak tertusuk oleh Layer 4 yang ada di 75px */}
+        {/* PERBAIKAN: Menambahkan 'inset-0 w-full h-full' pada wrapper overlayContent */}
         {displayOverlayContent && overlayContent && (
           <motion.div
-            className="absolute top-0 left-0 z-[2] will-change-transform"
+            className="absolute inset-0 w-full h-full z-[2] will-change-transform"
             style={{ transform: "translateZ(120px)" }}
           >
             {overlayContent}
